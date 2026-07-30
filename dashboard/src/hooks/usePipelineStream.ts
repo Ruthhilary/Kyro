@@ -31,7 +31,9 @@ export function usePipelineStream(cameraId: string): UsePipelineStreamResult {
   const connect = useCallback(() => {
     if (!mountedRef.current) return;
 
-    const ws = new WebSocket(`${WS_URL}/ws/${cameraId}`);
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("kyro_token") ?? "" : "";
+    const ws = new WebSocket(`${WS_URL}/ws/${cameraId}?api_key=${token}`);
     wsRef.current = ws;
 
     ws.onopen = () => {

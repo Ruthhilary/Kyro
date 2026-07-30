@@ -39,6 +39,11 @@ services:
       DATABASE_URL: postgresql+asyncpg://kyro:kyro@postgres:5432/kyro
       REDIS_HOST: redis
       REDIS_PORT: "6379"
+      REDIS_URL: redis://redis:6379/0
+      KYRO_API_KEY: kyro-dev-key-change-in-production
+      KYRO_JWT_SECRET: kyro-jwt-secret-change-in-production
+      KYRO_DASHBOARD_USER: admin
+      KYRO_DASHBOARD_PASS: kyro-admin-change-me
     depends_on:
       postgres:
         condition: service_healthy
