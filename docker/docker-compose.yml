@@ -1,0 +1,83 @@
+version: "3.9"
+
+services:
+
+  # ─── PostgreSQL ──────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: kyro
+      POSTGRES_USER: kyro
+      POSTGRES_PASSWORD: kyro
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kyro"]
+      interval: 5s
+      retries: 5
+
+  # ─── Redis ───────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+
+  # ─── FastAPI Backend ─────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/backend.Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://kyro:kyro@postgres:5432/kyro
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../backend:/app/backend
+      - ../ai:/app/ai
+
+  # ─── Vision Worker (CPU fallback — no GPU required for dev) ─────────────
+  vision:
+    build:
+      context: ..
+      dockerfile: docker/vision.Dockerfile
+    environment:
+      DETECTION_DEVICE: cpu     # Change to "cuda" with GPU + nvidia-container-toolkit
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      BACKEND_URL: http://backend:8000
+    depends_on:
+      - redis
+      - backend
+    volumes:
+      - ../ai:/app/ai
+      - model_weights:/app/ai/models/weights
+
+  # ─── Next.js Dashboard ───────────────────────────────────────────────────
+  dashboard:
+    build:
+      context: ..
+      dockerfile: docker/dashboard.Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_WS_URL: ws://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  model_weights:
