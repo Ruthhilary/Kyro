@@ -74,7 +74,7 @@ services:
   dashboard:
     build:
       context: ..
-      dockerfile: docker/dashboard.Dockerfile
+      dockerfile: dashboard/docker/dashboard.Dockerfile
     ports:
       - "3000:3000"
     environment:
