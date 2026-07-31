@@ -51,11 +51,11 @@ export default function DashboardPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <StatCard label="Current Attendance" value={att?.current ?? "—"} highlight />
-          <StatCard label="Peak Attendance"    value={att?.peak ?? "—"} />
-          <StatCard label="Total Entries"      value={att?.entries ?? "—"} />
-          <StatCard label="Total Exits"        value={att?.exits ?? "—"} />
-          <StatCard label="Occupancy"          value={att ? `${att.occupancy_pct}%` : "—"} />
+          <StatCard label="Current Attendance" value={att?.current ?? 0}   highlight />
+          <StatCard label="Peak Attendance"    value={att?.peak ?? 0} />
+          <StatCard label="Total Entries"      value={att?.entries ?? 0} />
+          <StatCard label="Total Exits"        value={att?.exits ?? 0} />
+          <StatCard label="Occupancy %"        value={att?.occupancy_pct ?? 0} />
         </div>
 
         {/* Seat map */}

@@ -27,6 +27,9 @@ export function usePipelineStream(cameraId: string): UsePipelineStreamResult {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
+  // Throttle: timestamp of last accepted UI update
+  const lastUpdateRef = useRef<number>(0);
+  const THROTTLE_MS = 250; // ~4fps UI updates, animation fills the gap
 
   const connect = useCallback(() => {
     if (!mountedRef.current) return;
@@ -44,7 +47,12 @@ export function usePipelineStream(cameraId: string): UsePipelineStreamResult {
     ws.onmessage = (event) => {
       try {
         const update: PipelineUpdate = JSON.parse(event.data);
-        setData(update);
+        const now = Date.now();
+        // Only push to React state at ~4fps — useAnimatedCounter smooths the rest
+        if (now - lastUpdateRef.current >= THROTTLE_MS) {
+          lastUpdateRef.current = now;
+          setData(update);
+        }
       } catch {
         // Malformed frame — skip silently
       }
