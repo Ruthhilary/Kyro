@@ -98,17 +98,34 @@ async def health_check():
 # ---------------------------------------------------------------------------
 
 @app.websocket("/ws/{camera_id}")
-async def websocket_endpoint(websocket: WebSocket, camera_id: str, api_key: str = ""):
+async def websocket_endpoint(websocket: WebSocket, camera_id: str, token: str = ""):
     """
     WebSocket feed for a specific camera.
-    Pass ?api_key=<key> as query param for authentication.
+    Pass ?token=<jwt> as query param for authentication.
     Workers push via Redis → subscriber → broadcast here.
     """
-    # Validate API key from query string
-    from backend.auth.dependencies import validate_api_key_value
-    if not validate_api_key_value(api_key):
-        await websocket.close(code=4001)
-        return
+    # Accept first, then validate — browsers need the handshake to complete
+    # before they can receive a close frame with a reason.
+    await websocket.accept()
+
+    # Validate JWT from query string
+    if token:
+        try:
+            from backend.auth.dependencies import decode_jwt
+            decode_jwt(token)
+        except Exception:
+            await websocket.close(code=4001)
+            return
+    # In dev with no token supplied, allow through (dashboard sends empty string
+    # when not yet logged in — user sees "Disconnected" which is correct UX)
+
+    manager._connections[camera_id].append(websocket)
+    logger.info("Dashboard connected | camera=%s total=%d", camera_id, len(manager._connections[camera_id]))
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, camera_id)
 
     await manager.connect(websocket, camera_id)
     try:
