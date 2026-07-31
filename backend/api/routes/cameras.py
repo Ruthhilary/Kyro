@@ -19,6 +19,7 @@ from typing import Optional
 from uuid import uuid4
 
 import redis
+from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select, update
@@ -27,6 +28,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.auth.dependencies import require_jwt
 from backend.database.connection import get_db
 from backend.database.models import Camera
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/cameras", tags=["Cameras"])

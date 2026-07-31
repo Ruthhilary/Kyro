@@ -8,15 +8,22 @@ Connection string is read from environment — never hardcoded.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
 from backend.database.models import Base
 
+# Load .env from the project root (Kyro/Kyro/.env) — must happen before
+# os.environ.get calls so env vars are available at module import time.
+_env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(_env_path)
+
 DATABASE_URL: str = os.environ.get(
     "DATABASE_URL",
-    "postgresql+asyncpg://kyro:kyro@localhost:5432/kyro",
+    "postgresql+asyncpg://kyro:kyro@localhost:5433/kyro",
 )
 
 engine = create_async_engine(
