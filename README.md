@@ -1,6 +1,3 @@
-Yes — I’d make it much more polished and investor/engineering-facing, while not claiming features Kyro doesn’t actually have.
-
-Here’s a completely new README you can use:
 
 Kyro
 
