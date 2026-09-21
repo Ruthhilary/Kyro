@@ -1,0 +1,109 @@
+version: "3.9"
+
+services:
+
+  # ─── PostgreSQL ──────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: kyro
+      POSTGRES_USER: kyro
+      POSTGRES_PASSWORD: kyro
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kyro"]
+      interval: 5s
+      retries: 5
+
+  # ─── Redis ───────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+
+  # ─── FastAPI Backend ─────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/backend.Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://kyro:kyro@postgres:5432/kyro
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_URL: redis://redis:6379/0
+      KYRO_API_KEY: kyro-dev-key-change-in-production
+      KYRO_JWT_SECRET: kyro-jwt-secret-change-in-production
+      KYRO_DASHBOARD_USER: kharis-tech
+      KYRO_DASHBOARD_PASS: Kharis2024!
+      VAPID_PUBLIC_KEY: BPpjMhWTJpqPrHG75MNmY2k1QysRFHfHAGn0bRUgxmZIC_-k0vRImAWcEZy_nxHfF2ZS8uKER-8675YRzGMI8qk
+      VAPID_PRIVATE_KEY: K6c7CZVpn58F2WkxgaiaAHC9kGLAEaRfr0rpKN3nphM
+      VAPID_SUBJECT: mailto:admin@kyro.local
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../backend:/app/backend
+      - ../ai:/app/ai
+
+  # ─── Vision Worker (CPU fallback — no GPU required for dev) ─────────────
+  vision:
+    build:
+      context: ..
+      dockerfile: docker/vision.Dockerfile
+    environment:
+      DETECTION_DEVICE: cpu     # Change to "cuda" with GPU + nvidia-container-toolkit
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      BACKEND_URL: http://backend:8000
+      KYRO_API_KEY: kyro-dev-key-change-in-production   # must match backend's KYRO_API_KEY
+      CAMERA_ID: cam-01                                 # must match a camera_id registered via the dashboard/API
+      # Real camera source — device path (Linux, e.g. a GoPro in UVC/webcam
+      # mode), a webcam index ("0"), or an RTSP/HTTP stream URL.
+      # Verify the device works on the HOST first: `ffplay /dev/video0`.
+      STREAM_SOURCE: /dev/video0
+    devices:
+      # Passes the host's video device into the container. Linux hosts
+      # only — Docker Desktop on macOS/Windows cannot pass through a USB
+      # device like this; on those platforms, use an RTSP/network stream
+      # from the camera instead (e.g. a GoPro in "webcam mode" over its
+      # own app/stream, or a capture-card/NDI bridge that exposes a URL).
+      - "/dev/video0:/dev/video0"
+    depends_on:
+      - redis
+      - backend
+    volumes:
+      - ../ai:/app/ai
+      - model_weights:/app/ai/models/weights
+
+  # ─── Next.js Dashboard ───────────────────────────────────────────────────
+  dashboard:
+    build:
+      context: ..
+      dockerfile: dashboard/docker/dashboard.Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8001
+        NEXT_PUBLIC_WS_URL: ws://localhost:8001
+        NEXT_PUBLIC_CAMERA_ID: cam-01
+        NEXT_PUBLIC_DEMO: "false"
+    ports:
+      - "3001:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8001
+      NEXT_PUBLIC_WS_URL: ws://localhost:8001
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  model_weights:
