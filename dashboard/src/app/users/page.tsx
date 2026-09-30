@@ -131,38 +131,173 @@ function RoleBadge({ role }: { role: string }) {
   return <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: bg, color: text }}>{role}</span>;
 }
 
-// ─── Reveal password dialog ───────────────────────────────────────────────────
-function RevealPasswordDialog({ username, onClose }: { username: string; onClose: () => void }) {
-  const [showPw, setShowPw] = useState(false);
-  function getPassword() {
-    if (!inDemoMode()) return "Stored as encrypted hash — cannot be retrieved";
-    const hardcoded: Record<string, string> = { admin: "Kharis2024!", "sarah.usher": "Sarah@2024!", "james.viewer": "James@2024!" };
-    if (hardcoded[username]) return hardcoded[username];
+// ─── Password dialog: view + change (with verified persistent save) ──────────
+const HARDCODED_PASSWORDS: Record<string, string> = {
+  admin: "Kharis2024!", "sarah.usher": "Sarah@2024!", "james.viewer": "James@2024!",
+};
+const HARDCODED_ROLES: Record<string, "admin" | "operator" | "viewer"> = {
+  admin: "admin", "sarah.usher": "operator", "james.viewer": "viewer",
+};
+
+function readCurrentPassword(username: string): string {
+  if (!inDemoMode()) return "Stored as encrypted hash — cannot be retrieved";
+  try {
+    const u = loadDemoUsers().find((u) => u.username === username);
+    if (u?.demo_password) return u.demo_password;
+  } catch {}
+  return HARDCODED_PASSWORDS[username] ?? "Demo@1234";
+}
+
+function PasswordDialog({ username, onPasswordChanged, onClose }: {
+  username: string;
+  onPasswordChanged: () => void;
+  onClose: () => void;
+}) {
+  const [showPw, setShowPw]   = useState(false);
+  const [mode, setMode]       = useState<"view" | "change">("view");
+  const [newPw, setNewPw]     = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [err, setErr]         = useState<string | null>(null);
+  const [ok, setOk]           = useState<string | null>(null);
+  const [pw, setPw]           = useState<string>(() => readCurrentPassword(username));
+  const isHardcoded = HARDCODED_PASSWORDS[username] !== undefined;
+  const hasCustomOverride = pw !== HARDCODED_PASSWORDS[username];
+
+  function savePassword() {
+    setErr(null); setOk(null);
+    if (newPw.length < 8) { setErr("Must be at least 8 characters"); return; }
+    if (newPw !== confirmPw) { setErr("Passwords don't match"); return; }
     try {
-      const u = loadDemoUsers().find((u) => u.username === username);
-      return u?.demo_password ?? "Demo@1234";
-    } catch { return "Demo@1234"; }
+      const all = loadDemoUsers();
+      const idx = all.findIndex((u) => u.username === username);
+      if (idx >= 0) {
+        all[idx] = { ...all[idx], demo_password: newPw };
+      } else {
+        // User not yet in the saved list (edge case) — add a shadow entry
+        const role = HARDCODED_ROLES[username] ?? "viewer";
+        all.push({
+          id: Date.now(),
+          username,
+          display_name: username,
+          role,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          demo_password: newPw,
+          pages: (ROLE_DEFAULT_PAGES[role] as PageId[]) ?? ["seating", "cameras"],
+        } as DemoUser);
+      }
+      saveDemoUsers(all);
+      // Verify: read it back and confirm it stuck
+      const check = loadDemoUsers().find((u) => u.username === username);
+      if (check?.demo_password !== newPw) {
+        setErr("Save failed — browser storage may be blocked or full.");
+        return;
+      }
+      setPw(newPw);
+      setOk("Password saved. It will survive page refreshes on this browser.");
+      setNewPw(""); setConfirmPw("");
+      setTimeout(() => { setMode("view"); onPasswordChanged(); }, 1000);
+    } catch (e: any) {
+      setErr(e?.message ?? "Failed to save");
+    }
   }
-  const pw = getPassword();
+
+  function resetToDefault() {
+    if (!isHardcoded) return;
+    if (!window.confirm(`Reset ${username}'s password back to the built-in default?`)) return;
+    setErr(null); setOk(null);
+    try {
+      const all = loadDemoUsers().map((u) =>
+        u.username === username ? { ...u, demo_password: undefined } : u
+      );
+      saveDemoUsers(all);
+      setPw(HARDCODED_PASSWORDS[username]);
+      setOk("Password reset to built-in default.");
+      onPasswordChanged();
+    } catch (e: any) {
+      setErr(e?.message ?? "Failed to reset");
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.75)" }}>
       <div className="rounded-2xl p-6 w-96 shadow-2xl" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <KeyRound size={16} style={{ color: "#818cf8" }} />
-            <h3 className="text-sm font-semibold text-white">Password — {username}</h3>
+            <h3 className="text-sm font-semibold text-white">
+              {mode === "view" ? "Password" : "Change password"} — {username}
+            </h3>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={16} /></button>
         </div>
-        <div className="flex items-center gap-2 rounded-lg px-3 py-3 mb-4" style={{ background: "#0d0f1a", border: "1px solid #374151" }}>
-          <span className="flex-1 text-sm font-mono text-white tracking-wider select-all">
-            {showPw ? pw : "•".repeat(Math.min(pw.length, 16))}
-          </span>
-          <button onClick={() => setShowPw((p) => !p)} className="text-gray-500 hover:text-white flex-shrink-0">
-            {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-          </button>
-        </div>
-        <button onClick={onClose} className="w-full py-2 rounded-lg text-sm font-medium text-white" style={{ background: "#1e2235" }}>Close</button>
+
+        {mode === "view" ? (
+          <>
+            <div className="flex items-center gap-2 rounded-lg px-3 py-3 mb-3" style={{ background: "#0d0f1a", border: "1px solid #374151" }}>
+              <span className="flex-1 text-sm font-mono text-white tracking-wider select-all">
+                {showPw ? pw : "•".repeat(Math.min(pw.length, 16))}
+              </span>
+              <button onClick={() => setShowPw((p) => !p)} className="text-gray-500 hover:text-white flex-shrink-0">
+                {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
+            {ok && <p className="text-xs text-green-400 mb-3 rounded-lg px-3 py-2" style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)" }}>{ok}</p>}
+            {isHardcoded && hasCustomOverride && (
+              <p className="text-xs text-amber-400 mb-3">Custom password set (overrides the built-in default)</p>
+            )}
+            <div className="flex gap-2">
+              <button onClick={() => { setMode("change"); setOk(null); setErr(null); }}
+                className="flex-1 py-2 rounded-lg text-sm font-medium text-white" style={{ background: "#4f46e5" }}>
+                Change password
+              </button>
+              {isHardcoded && hasCustomOverride && (
+                <button onClick={resetToDefault}
+                  className="py-2 px-3 rounded-lg text-xs text-gray-400 hover:text-white" style={{ background: "#1e2235" }}>
+                  Reset
+                </button>
+              )}
+              <button onClick={onClose} className="py-2 px-4 rounded-lg text-sm text-gray-400 hover:text-white" style={{ background: "#1e2235" }}>
+                Close
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex flex-col gap-3 mb-3">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">New password (min 8 characters)</label>
+                <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: "#0d0f1a", border: "1px solid #374151" }}>
+                  <input type={showPw ? "text" : "password"} value={newPw} onChange={(e) => setNewPw(e.target.value)}
+                    autoFocus minLength={8} autoComplete="new-password"
+                    className="flex-1 bg-transparent text-sm text-white focus:outline-none" />
+                  <button type="button" onClick={() => setShowPw((p) => !p)} className="text-gray-500 hover:text-white flex-shrink-0">
+                    {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Confirm new password</label>
+                <input type={showPw ? "text" : "password"} value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)}
+                  minLength={8} autoComplete="new-password"
+                  className="w-full text-sm text-white rounded-lg px-3 py-2 focus:outline-none"
+                  style={{ background: "#0d0f1a", border: "1px solid #374151" }} />
+              </div>
+              {err && <p className="text-xs text-red-400 rounded-lg px-3 py-2" style={{ background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.3)" }}>{err}</p>}
+              {ok  && <p className="text-xs text-green-400 rounded-lg px-3 py-2" style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)" }}>{ok}</p>}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={savePassword} disabled={!newPw || !confirmPw}
+                className="flex-1 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50" style={{ background: "#4f46e5" }}>
+                Save password
+              </button>
+              <button onClick={() => { setMode("view"); setNewPw(""); setConfirmPw(""); setErr(null); setOk(null); }}
+                className="flex-1 py-2 rounded-lg text-sm text-gray-400 hover:text-white" style={{ background: "#1e2235" }}>
+                Cancel
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -449,7 +584,7 @@ export default function UsersPage() {
         )}
         <p className="text-xs text-gray-700 mt-5">The built-in admin account always has full access.</p>
       </main>
-      {revealingFor && <RevealPasswordDialog username={revealingFor} onClose={() => setRevealingFor(null)} />}
+      {revealingFor && <PasswordDialog username={revealingFor} onPasswordChanged={loadUsers} onClose={() => setRevealingFor(null)} />}
     </div>
   );
 }
