@@ -55,6 +55,12 @@ services:
     volumes:
       - ../backend:/app/backend
       - ../ai:/app/ai
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
 
   # ─── Vision Worker (CPU fallback — no GPU required for dev) ─────────────
   vision:
@@ -92,17 +98,16 @@ services:
       context: ..
       dockerfile: dashboard/docker/dashboard.Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:8001
-        NEXT_PUBLIC_WS_URL: ws://localhost:8001
+        BACKEND_URL: http://backend:8000
         NEXT_PUBLIC_CAMERA_ID: cam-01
         NEXT_PUBLIC_DEMO: "false"
     ports:
       - "3001:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8001
-      NEXT_PUBLIC_WS_URL: ws://localhost:8001
+      BACKEND_URL: http://backend:8000
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   postgres_data:
