@@ -54,10 +54,25 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS — allow dashboard (same-origin via nginx in prod, localhost in dev)
+# ─── Startup security checks ────────────────────────────────────────────────
+_DEFAULT_JWT_SECRET = "kyro-jwt-secret-change-in-production"  # keep in sync with auth/dependencies.py
+_DEFAULT_API_KEY    = "kyro-dev-key-change-in-production"     # keep in sync with docker-compose default
+if os.environ.get("KYRO_JWT_SECRET", _DEFAULT_JWT_SECRET) == _DEFAULT_JWT_SECRET:
+    raise RuntimeError(
+        "KYRO_JWT_SECRET is unset or still the default value. "
+        "Set a strong random secret (e.g. `openssl rand -hex 32`) in your environment "
+        "before starting the API — otherwise session tokens are forgeable."
+    )
+if os.environ.get("KYRO_API_KEY", _DEFAULT_API_KEY) == _DEFAULT_API_KEY:
+    logger.warning(
+        "KYRO_API_KEY is still the default value — set a strong secret before exposing the API."
+    )
+
+# CORS — dashboard origin(s) only. Set ALLOWED_ORIGINS to a comma-separated list
+# for prod (e.g. "https://kyro.kharischurch.com"). No wildcard fallback.
 _raw_origins = os.environ.get("ALLOWED_ORIGINS", "")
 _extra = [o.strip() for o in _raw_origins.split(",") if o.strip()]
-_allow_origins = list(set([
+_allow_origins = sorted(set([
     "http://localhost:3000",
     "http://localhost:3001",
     "http://localhost:80",
@@ -67,11 +82,11 @@ _allow_origins = list(set([
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allow_origins,
-    allow_origin_regex=r"https?://.*",   # allow any origin in prod (nginx handles security)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+logger.info("CORS allow_origins: %s", _allow_origins)
 
 # Register routers
 app.include_router(auth_router)

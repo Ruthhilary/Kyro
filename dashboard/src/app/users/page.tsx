@@ -234,14 +234,24 @@ function PasswordDialog({ username, onPasswordChanged, onClose }: {
 
         {mode === "view" ? (
           <>
-            <div className="flex items-center gap-2 rounded-lg px-3 py-3 mb-3" style={{ background: "var(--bg-base)", border: "1px solid #374151" }}>
+            <div className="flex items-center gap-2 rounded-lg px-3 py-3 mb-2" style={{ background: "var(--bg-base)", border: "1px solid #374151" }}>
               <span className="flex-1 text-sm font-mono text-white tracking-wider select-all">
                 {showPw ? pw : "•".repeat(Math.min(pw.length, 16))}
               </span>
-              <button onClick={() => setShowPw((p) => !p)} className="text-gray-500 hover:text-white flex-shrink-0">
+              <button
+                onClick={() => {
+                  if (!showPw && !window.confirm(`Reveal the plaintext password for "${username}"?\n\nOnly do this on a screen no-one else can see.`)) return;
+                  setShowPw((p) => !p);
+                }}
+                className="text-gray-500 hover:text-white flex-shrink-0"
+                aria-label={showPw ? "Hide password" : "Reveal password"}>
                 {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
+            <p className="text-xs text-gray-500 mb-3">
+              Demo storage — passwords live in this browser only, not hashed.
+              A production backend would store hashes and never allow reveal.
+            </p>
             {ok && <p className="text-xs text-green-400 mb-3 rounded-lg px-3 py-2" style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)" }}>{ok}</p>}
             {isHardcoded && hasCustomOverride && (
               <p className="text-xs text-amber-400 mb-3">Custom password set (overrides the built-in default)</p>

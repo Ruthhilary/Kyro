@@ -13,9 +13,11 @@ from __future__ import annotations
 
 import hmac
 import os
+import time
+from collections import deque
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy import select
 
@@ -29,6 +31,31 @@ router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 
 _DASHBOARD_USER = os.environ.get("KYRO_DASHBOARD_USER", "admin")
 _DASHBOARD_PASS = os.environ.get("KYRO_DASHBOARD_PASS", "kyro-admin-change-me")
+
+# ─── Rate limiter (per-IP sliding window) ────────────────────────────────────
+# Deliberately in-memory + dependency-free. For a multi-worker deployment,
+# swap for a Redis-backed limiter (e.g. slowapi with a Redis store) so the
+# window is shared across workers.
+_RATE_WINDOW_S   = int(os.environ.get("KYRO_LOGIN_RATE_WINDOW_S", "60"))
+_RATE_MAX_HITS   = int(os.environ.get("KYRO_LOGIN_RATE_MAX_HITS", "10"))
+_login_hits: dict[str, deque[float]] = {}
+
+def _rate_limit(request: Request) -> None:
+    """Raise 429 if the client IP has made too many login attempts recently."""
+    ip = (request.client.host if request.client else None) or "unknown"
+    now = time.monotonic()
+    hits = _login_hits.setdefault(ip, deque(maxlen=_RATE_MAX_HITS + 1))
+    # Drop stale hits outside the window
+    while hits and now - hits[0] > _RATE_WINDOW_S:
+        hits.popleft()
+    if len(hits) >= _RATE_MAX_HITS:
+        retry_after = int(_RATE_WINDOW_S - (now - hits[0])) + 1
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            f"Too many login attempts. Try again in {retry_after}s.",
+            headers={"Retry-After": str(retry_after)},
+        )
+    hits.append(now)
 
 
 class TokenRequest(BaseModel):
@@ -50,8 +77,9 @@ class MeResponse(BaseModel):
 
 
 @router.post("/token", response_model=TokenResponse)
-async def login(body: TokenRequest, db: AsyncSession = Depends(get_db)):
+async def login(body: TokenRequest, request: Request, db: AsyncSession = Depends(get_db)):
     """Exchange credentials for a JWT. Checks DB users first, falls back to env vars."""
+    _rate_limit(request)
     role = "admin"
     display_name = body.username
 

@@ -435,13 +435,18 @@ def main() -> None:
             return "frozen_frame"
         return None
 
-    # Graceful shutdown on SIGTERM (e.g. Docker stop)
+    # Graceful shutdown on SIGTERM (Docker stop) OR SIGINT (Ctrl+C).
+    # Both flip the flag so the main loop exits after the current frame,
+    # instead of being killed mid-pipeline (which risks leaving Redis
+    # health keys around and dropping the last publish).
     _running = True
     def _handle_signal(sig, frame):  # noqa: ANN001
         nonlocal _running
-        logger.info("Signal %d received — shutting down", sig)
+        if _running:
+            logger.info("Signal %d received — finishing current frame and shutting down", sig)
         _running = False
     signal.signal(signal.SIGTERM, _handle_signal)
+    signal.signal(signal.SIGINT,  _handle_signal)
 
     logger.info(
         "Worker started | camera=%s zone=%r stream=%s fps=%d seats=%d capacity=%d device=%s",
@@ -713,12 +718,17 @@ def main() -> None:
         logger.info("Worker stopped by keyboard interrupt")
     finally:
         if cap:
-            cap.release()
+            try: cap.release()
+            except Exception: pass
+        # Flush the pipeline's re-id gallery so nothing leaks across restarts.
+        try: pipeline.reset_session()
+        except Exception: pass
         # Remove health key immediately so dashboard shows "offline"
-        try:
-            r.delete(health_key)
-        except Exception:
-            pass
+        try: r.delete(health_key)
+        except Exception: pass
+        # Close the Redis connection pool cleanly.
+        try: r.close()
+        except Exception: pass
         logger.info("Worker exited cleanly | camera=%s", args.camera_id)
 
 

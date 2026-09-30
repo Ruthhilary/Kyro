@@ -1,0 +1,37 @@
+# Secrets / env — never commit
+.env
+.env.local
+.env.*.local
+docker/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / Next
+node_modules/
+.next/
+out/
+
+# Logs / runtime state
+logs/
+*.log
+.kyro.pids
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Model weights (large binary artifacts) — keep the small default only
+ai/models/weights/*.onnx
+ai/models/weights/*.pth
+!ai/models/weights/.gitkeep

@@ -7,6 +7,7 @@ import { SeatAlertProvider } from "@/lib/SeatAlertContext";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme";
 import { GlobalReviewOverlay } from "@/components/ui/GlobalReviewOverlay";
 import { GlobalSeatAlertOverlay } from "@/components/ui/GlobalSeatAlertOverlay";
+import { BackendStatusBanner } from "@/components/ui/BackendStatusBanner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,6 +28,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CameraProvider>
             <ReviewProvider>
               <SeatAlertProvider>
+                {/* Backend-unreachable banner (only shown in Live mode) */}
+                <BackendStatusBanner />
                 {children}
                 {/* Global AI question overlay — visible on every page */}
                 <GlobalReviewOverlay />

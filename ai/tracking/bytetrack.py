@@ -107,6 +107,11 @@ def _tlwh_to_xyxy(tlwh: np.ndarray) -> np.ndarray:
 class Track:
     """Represents one tracked person across frames."""
 
+    # Monotonically increasing across the lifetime of the PROCESS, so a
+    # tracker re-instantiation inside the same worker (e.g. session reset)
+    # never re-uses an id from the previous run. Restarting the worker
+    # itself starts fresh at 1 — that's fine, because the re-id gallery is
+    # also cleared on restart, so nothing external retains those ids.
     _id_counter: int = 0
 
     def __init__(self, detection: Detection, cfg: TrackingConfig) -> None:
@@ -261,9 +266,14 @@ class ByteTracker:
         self._cfg = cfg
         self._tracks: list[Track] = []
         self._frame_count: int = 0
-        # Reset class-level ID counter when tracker is re-instantiated
-        Track._id_counter = 0
-        logger.info("ByteTracker initialised | max_age=%d min_hits=%d", cfg.max_age, cfg.min_hits)
+        # Do NOT reset Track._id_counter here — a re-instantiation inside the
+        # same process would then collide with ids from the previous instance
+        # (still remembered by the re-id gallery, the counter, and any
+        # downstream consumer that cached them).
+        logger.info(
+            "ByteTracker initialised | max_age=%d min_hits=%d next_track_id=%d",
+            cfg.max_age, cfg.min_hits, Track._id_counter + 1,
+        )
 
     # ------------------------------------------------------------------
     # Public API
