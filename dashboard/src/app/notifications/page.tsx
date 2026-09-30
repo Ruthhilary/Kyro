@@ -65,9 +65,27 @@ function StatusDot({ active }: { active: boolean }) {
   return <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${active ? "bg-green-500 animate-pulse" : "bg-gray-600"}`} />;
 }
 
+// Detect iOS + whether the site is already installed as a home-screen PWA.
+// On iPhone/iPad, Web Push ONLY works after installing via Share → Add to
+// Home Screen (iOS 16.4+). Until that happens, Notification/PushManager
+// aren't exposed at all — so we have to explain the extra step.
+function detectDevice(): { iOS: boolean; standalone: boolean; android: boolean } {
+  if (typeof window === "undefined") return { iOS: false, standalone: false, android: false };
+  const ua = navigator.userAgent;
+  const iOS = /iPad|iPhone|iPod/.test(ua) || (ua.includes("Mac") && "ontouchend" in document);
+  const standalone =
+    window.matchMedia?.("(display-mode: standalone)").matches === true ||
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window.navigator as any).standalone === true;
+  const android = /Android/.test(ua);
+  return { iOS, standalone, android };
+}
+
 export default function NotificationsPage() {
   const push = usePushNotifications();
   const { cameras } = useCameras();
+  const [device, setDevice] = useState({ iOS: false, standalone: false, android: false });
+  useEffect(() => { setDevice(detectDevice()); }, []);
 
   const prefs = typeof window !== "undefined" ? loadPrefs() : { warn: 0.80, crit: 0.90, offline: true };
   const [warnThreshold, setWarnThresholdState] = useState(prefs.warn);
@@ -449,17 +467,55 @@ export default function NotificationsPage() {
           </div>
           )}
 
-        {/* Add to home screen tip */}
-        {push.supported && !isEnabled && push.permission !== "denied" && (
+        {/* iOS-specific: MUST install as PWA before push works at all */}
+        {device.iOS && !device.standalone && (
+          <div className="rounded-2xl px-5 py-4 flex items-start gap-3"
+            style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.35)" }}>
+            <AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-white mb-1">Install Kyro to enable notifications on iPhone/iPad</p>
+              <p className="text-xs text-gray-300 leading-relaxed">
+                Apple only delivers push notifications on iOS when the site is
+                installed as a home-screen app. To finish setup:
+              </p>
+              <ol className="text-xs text-gray-400 leading-relaxed mt-2 space-y-0.5 list-decimal list-inside">
+                <li>Open this page in <span className="text-white">Safari</span> (not another browser).</li>
+                <li>Tap the <span className="text-white">Share</span> button (square with an arrow).</li>
+                <li>Choose <span className="text-white">Add to Home Screen</span>.</li>
+                <li>Open the Kyro icon from your home screen, then come back to this page and turn on notifications.</li>
+              </ol>
+              <p className="text-xs text-amber-300 mt-2">Requires iOS 16.4 or newer.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Android / desktop-Chrome-style install prompt (Push already works either way) */}
+        {!device.iOS && push.supported && !isEnabled && push.permission !== "denied" && (
           <div className="rounded-2xl px-5 py-4 flex items-start gap-3"
             style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}>
             <Smartphone size={16} className="text-indigo-400 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-white mb-1">Tip: install as an app</p>
               <p className="text-xs text-gray-400 leading-relaxed">
-                On iPhone: tap <span className="text-white">Share</span> → <span className="text-white">Add to Home Screen</span>.
-                On Android: tap <span className="text-white">⋮</span> → <span className="text-white">Install app</span>.
-                Then enable notifications above for a fully native feel.
+                {device.android
+                  ? <>On Android: tap <span className="text-white">⋮</span> → <span className="text-white">Install app</span> (or "Add to home screen") for a native-feel experience.</>
+                  : <>Look for an install icon in the address bar to keep Kyro one tap away.</>}
+                {" "}Notifications work either way — installing is optional.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Once installed on iOS, celebrate + prompt them to enable notifications */}
+        {device.iOS && device.standalone && !isEnabled && push.supported && (
+          <div className="rounded-2xl px-5 py-4 flex items-start gap-3"
+            style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.35)" }}>
+            <CheckCircle size={16} className="text-green-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-white mb-1">Kyro is installed — enable notifications above</p>
+              <p className="text-xs text-gray-300 leading-relaxed">
+                You're running the installed app. Turn on notifications and you'll get
+                alerts even when Kyro is closed or your device is locked.
               </p>
             </div>
           </div>

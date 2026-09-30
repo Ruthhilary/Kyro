@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#818cf8"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded-square background (works as any + maskable) -->
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+  <!-- Radar-style rings + centre dot suggesting "Vision Intelligence" -->
+  <g fill="none" stroke="url(#ring)" stroke-width="14" stroke-linecap="round" opacity="0.85">
+    <circle cx="256" cy="256" r="52"/>
+    <circle cx="256" cy="256" r="112"/>
+    <path d="M256 100 A 156 156 0 0 1 412 256" stroke-opacity="0.55"/>
+  </g>
+  <circle cx="256" cy="256" r="18" fill="#ffffff"/>
+</svg>
