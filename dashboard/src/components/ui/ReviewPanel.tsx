@@ -306,6 +306,25 @@ function UnansweredPanel({ cameraId }: { cameraId: string }) {
     return () => window.removeEventListener("kyro_unanswered_changed", read);
   }, []);
 
+  // Focus a specific review when the page is opened from a push notification
+  // deep-link (/seating?review=<id>). Dispatched by the seating page after
+  // it parses the URL params.
+  useEffect(() => {
+    function onFocus(e: Event) {
+      const id = (e as CustomEvent).detail?.reviewId as string | undefined;
+      if (!id) return;
+      // Reload in case the target review was just persisted by pipeline events
+      const fresh = loadUnanswered();
+      setItems(fresh);
+      if (fresh.some((r) => r.review_id === id)) {
+        setOpen(true);
+        setExpandedId(id);
+      }
+    }
+    window.addEventListener("kyro_focus_review", onFocus);
+    return () => window.removeEventListener("kyro_focus_review", onFocus);
+  }, []);
+
   async function answer(review: ReviewRequest, option: string) {
     const answerCode = ANSWER_MAP[option] ?? option.toLowerCase().split(" ")[0];
     setAnswering(review.review_id);

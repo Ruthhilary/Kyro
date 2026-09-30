@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { X, Camera as CameraIcon, RotateCcw, Download, Wifi, WifiOff, RefreshCw } from "lucide-react";
 import { usePipelineStream } from "@/hooks/usePipelineStream";
 import { useCameras } from "@/hooks/useCameras";
@@ -715,6 +716,19 @@ function CameraSeatView({ camera }: { camera: Camera }) {
   const { role } = useAuth();
   const streamRole = (role === "admin" || role === "operator") ? role as "admin"|"operator" : "viewer" as const;
   const { data, connected, reviews, dismissReview } = usePipelineStream(camera.camera_id, streamRole);
+
+  // Deep-link from a push notification: /seating?review=<id> should auto-open
+  // the unanswered-review panel focused on that specific question.
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const reviewId = searchParams?.get("review");
+    if (!reviewId) return;
+    // Give the UnansweredPanel a beat to mount & load from storage.
+    const t = setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("kyro_focus_review", { detail: { reviewId } }));
+    }, 250);
+    return () => clearTimeout(t);
+  }, [searchParams]);
   const [overrides, setOverrides] = useState<Record<string, Partial<SeatState>>>({});
   const [loadedId, setLoadedId]   = useState<string | null>(null);
   const [showReset, setShowReset] = useState(false);

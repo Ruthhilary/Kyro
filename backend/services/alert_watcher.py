@@ -171,6 +171,8 @@ async def _fire_push_for_zone(
             "online":   detail or "Feed restored — counting resumed.",
         }.get(level, "")
 
+        # Deep-link to the attendance page for this camera so the operator
+        # lands directly on the capacity view they were alerted about.
         payload = {
             "title":     title,
             "body":      body,
@@ -178,6 +180,8 @@ async def _fire_push_for_zone(
             "camera_id": camera_id,
             "level":     level,
             "pct":       round(pct, 1),
+            "url":       f"/attendance?camera={camera_id}",
+            "requireInteraction": level == "critical",
         }
 
         async with AsyncSessionLocal() as db:

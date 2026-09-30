@@ -65,13 +65,23 @@ async def _push_review_request(camera_id: str, payload: dict) -> None:
         if seat_id:
             push_body += f" · Seat {seat_id}"
 
+        review_id = payload.get("review_id")
+        # Deep-link straight to the seating page for THIS camera with the review
+        # pre-focused, so tapping the notification takes the user to exactly the
+        # question that fired it — not the generic cameras page.
+        url = f"/seating?camera={camera_id}"
+        if review_id:
+            url += f"&review={review_id}"
+
         payload_out = {
             "title":     push_title,
             "body":      push_body,
-            "tag":       f"kyro-review-{payload.get('review_id', camera_id)}",
+            "tag":       f"kyro-review-{review_id or camera_id}",
             "camera_id": camera_id,
             "level":     "review",
-            "review_id": payload.get("review_id"),
+            "review_id": review_id,
+            "url":       url,
+            "requireInteraction": True,   # review questions stay on-screen until acted on
         }
 
         factory = _get_db_factory()
