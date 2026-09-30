@@ -6,7 +6,7 @@ import { usePipelineStream } from "@/hooks/usePipelineStream";
 import { useCameras } from "@/hooks/useCameras";
 import { useAuth } from "@/hooks/useAuth";
 import { ReviewPanel } from "@/components/ui/ReviewPanel";
-import { reservedApi, authApi, seatsResetApi, camerasApi } from "@/lib/api";
+import { reservedApi, authApi, seatsResetApi, camerasApi, zonesApi, type ZoneDef } from "@/lib/api";
 import { DEMO_MODE } from "@/lib/demo";
 
 function isLiveMode(): boolean { if (typeof window === "undefined") return false; return localStorage.getItem("kyro_mode") === "live"; }
@@ -31,6 +31,84 @@ const DOT_COLOURS: Record<string, string> = {
   rota_hold:          "#9b5de5",  // purple — same as reserved (held seat)
   unknown:            "var(--border-subtle)",  // very dark
 };
+
+// ─── Zones knowledge (read from wherever they were saved) ───────────────────
+// A zone the operator marked in the Layout Editor is knowledge the system
+// should *act on* — hold seats inside a stage zone, ignore seats inside an
+// exit/toilet zone. This hook loads the zones for one camera and re-reads
+// them the moment the editor writes new ones (storage event), so this view
+// always reflects the current rules without a manual refresh.
+function useZones(cameraId: string | null): ZoneDef[] {
+  const [zones, setZones] = useState<ZoneDef[]>([]);
+
+  useEffect(() => {
+    if (!cameraId) return;
+    let cancelled = false;
+    zonesApi.list(cameraId)
+      .then((z) => { if (!cancelled) setZones(z ?? []); })
+      .catch(() => { if (!cancelled) setZones([]); });
+
+    // Editor writes to localStorage under kyro_demo_zones_<cameraId>.
+    // Re-read on:
+    //   • cross-tab storage events (browser fires these to OTHER tabs), and
+    //   • same-tab "kyro_zones_changed" custom event (dispatched by
+    //     zonesApi.create/update/delete — see lib/api.ts).
+    const key = `kyro_demo_zones_${cameraId}`;
+    function reload() { zonesApi.list(cameraId).then((z) => setZones(z ?? [])).catch(() => {}); }
+    function onStorage(e: StorageEvent) { if (e.key === key) reload(); }
+    function onCustom(e: Event) {
+      const detail = (e as CustomEvent).detail as { cameraId?: string } | undefined;
+      if (!detail?.cameraId || detail.cameraId === cameraId) reload();
+    }
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("kyro_zones_changed", onCustom);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("kyro_zones_changed", onCustom);
+    };
+  }, [cameraId]);
+
+  return zones;
+}
+
+function summariseZones(zones: ZoneDef[]): { hold: number; ignore: number; labels: string[] } {
+  let hold = 0, ignore = 0;
+  for (const z of zones) {
+    if (z.zone_type === "ignore") ignore++;
+    else hold++;
+  }
+  return { hold, ignore, labels: zones.map((z) => z.label) };
+}
+
+// Compact display of the zones the system currently knows about for this
+// camera — reassures the operator that a saved zone is actually in force.
+function ZonesBadge({ zones }: { zones: ZoneDef[] }) {
+  const { hold, ignore, labels } = summariseZones(zones);
+  if (zones.length === 0) {
+    return (
+      <div className="rounded-xl p-4 flex flex-col gap-2" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
+        <p style={{ fontSize: 9, fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.12em" }}>Zones known</p>
+        <span style={{ fontSize: 32, fontWeight: 800, color: "#4b5563", lineHeight: 1 }}>0</span>
+        <p style={{ fontSize: 11, color: "#6b7280" }}>Draw one in the Seat Editor</p>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-xl p-4 flex flex-col gap-2" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
+      <p style={{ fontSize: 9, fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.12em" }}>Zones known</p>
+      <div className="flex items-baseline gap-2">
+        <span style={{ fontSize: 32, fontWeight: 800, color: "#e5e7eb", lineHeight: 1 }}>{zones.length}</span>
+        <span style={{ fontSize: 12, color: "#9ca3af" }}>
+          {hold > 0 && `${hold} hold-seats`}{hold > 0 && ignore > 0 && " · "}{ignore > 0 && `${ignore} ignore`}
+        </span>
+      </div>
+      <p style={{ fontSize: 11, color: "#6b7280" }} title={labels.join(", ")}>
+        {labels.slice(0, 3).join(" · ")}{labels.length > 3 ? ` +${labels.length - 3} more` : ""}
+      </p>
+    </div>
+  );
+}
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
 function StatCard({ label, value, sub, valueColour, change }: {
@@ -473,6 +551,9 @@ function CameraSeatView({ camera }: { camera: Camera }) {
   const [showReset, setShowReset] = useState(false);
   const [selectedSeat, setSelectedSeat] = useState<SeatState | null>(null);
   const [zoom, setZoom] = useState(1);
+  // Zones the system knows about for THIS camera (drawn in the Seat Editor).
+  // Auto-refreshes when the editor saves a new zone (via storage event).
+  const zones = useZones(camera.camera_id);
 
   const isQueue = camera.location === "queue" ||
     ["outside","queue","entrance","foyer","lobby","car park","carpark","waiting","exterior","outdoor","gate"]
@@ -599,10 +680,11 @@ function CameraSeatView({ camera }: { camera: Camera }) {
 
       <div className="flex-1 overflow-auto p-5 flex flex-col gap-5">
         {/* Stat cards */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-5 gap-4">
           <StatCard label="Capacity Utilization" value={`${utilPct}.${Math.abs(utilPct % 10)}%`} change="+2.1%" />
           <StatCard label="Occupied Units" value={occupied.toString()} sub={`of ${cap}`} valueColour="#ff4d6d" />
           <StatCard label="Reserved Seats" value={reserved.toString()} sub="Reserved" valueColour="#9b5de5" />
+          <ZonesBadge zones={zones} />
           <StatCard label="Anomaly Alerts" value="00" sub="Secure" />
         </div>
 

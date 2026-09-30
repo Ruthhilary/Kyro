@@ -215,6 +215,10 @@ function readDemoZones(cameraId: string): ZoneDef[] {
 function writeDemoZones(cameraId: string, zones: ZoneDef[]): void {
   if (typeof window === "undefined") return;
   try { localStorage.setItem(ZONES_KEY(cameraId), JSON.stringify(zones)); } catch {}
+  // Storage events fire in OTHER tabs only — dispatch a custom event so
+  // components in the SAME tab (e.g. the Seat Map) re-read zones after the
+  // Layout Editor saves one, without needing a page refresh.
+  try { window.dispatchEvent(new CustomEvent("kyro_zones_changed", { detail: { cameraId } })); } catch {}
 }
 
 function makeZoneId(): string {
