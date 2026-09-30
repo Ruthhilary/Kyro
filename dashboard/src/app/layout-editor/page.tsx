@@ -56,7 +56,7 @@ export default function LayoutEditorPage() {
   return (
     <div className="flex min-h-screen bg-gray-950 text-gray-100">
       <Sidebar />
-      <main className="flex-1 p-6 overflow-auto min-w-0">
+      <main className="flex-1 p-3 sm:p-6 overflow-auto min-w-0">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">

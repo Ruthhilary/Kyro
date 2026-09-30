@@ -520,7 +520,7 @@ export default function SessionsPage() {
   return (
     <div className="flex min-h-screen text-gray-100" style={{ background: BG }}>
       <Sidebar />
-      <main className="flex-1 p-6 overflow-auto max-w-3xl flex flex-col gap-6">
+      <main className="flex-1 p-3 sm:p-6 overflow-auto max-w-3xl flex flex-col gap-6">
 
         <div>
           <h1 className="text-xl font-bold text-white">Sessions</h1>

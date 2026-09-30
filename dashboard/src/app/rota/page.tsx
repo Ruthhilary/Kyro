@@ -215,7 +215,7 @@ function EntryEditor({ entry, index, onChange, onRemove }: {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
           <label className="text-xs text-gray-500">Who / group</label>
           <input value={entry.label} onChange={(e) => set("label", e.target.value)}
@@ -230,7 +230,7 @@ function EntryEditor({ entry, index, onChange, onRemove }: {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
           <label className="text-xs text-gray-500">On stage from</label>
           <DateTimePicker value={entry.start_time.slice(0, 16)}
@@ -243,7 +243,7 @@ function EntryEditor({ entry, index, onChange, onRemove }: {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
           <label className="text-xs text-gray-500">Seat rows (comma-separated)</label>
           <input value={entry.rows.join(", ")}
@@ -518,7 +518,7 @@ export default function RotaPage() {
   return (
     <div className="flex min-h-screen text-gray-100" style={{ background: "var(--bg-base)" }}>
       <Sidebar />
-      <main className="flex-1 p-6 max-w-2xl flex flex-col gap-6">
+      <main className="flex-1 p-3 sm:p-6 max-w-2xl flex flex-col gap-6">
 
         {/* Header */}
         <div>

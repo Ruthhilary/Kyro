@@ -935,7 +935,7 @@ export default function LiveCamerasPage() {
   return (
     <div className="flex min-h-screen text-gray-100" style={{ background: BG }}>
       <Sidebar />
-      <main className="flex-1 px-8 py-8 overflow-auto">
+      <main className="flex-1 px-4 py-4 sm:px-8 sm:py-8 overflow-auto">
 
         {/* Header */}
         <div className="mb-6">

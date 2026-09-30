@@ -129,7 +129,7 @@ function CameraCard({ cam, onUpdated, onUpdate, onDelete }: {
       <div className="px-4 py-4">
         {editing ? (
           <div className="flex flex-col gap-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-xs text-gray-400">Camera name</label>
                 <input value={draft.name} onChange={(e) => setDraft((p) => ({ ...p, name: e.target.value }))}
@@ -141,7 +141,7 @@ function CameraCard({ cam, onUpdated, onUpdate, onDelete }: {
                   className="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-xs text-gray-400">Stream URL</label>
                 <input value={draft.stream_url} onChange={(e) => setDraft((p) => ({ ...p, stream_url: e.target.value }))}
@@ -328,7 +328,7 @@ function AddCameraForm({ onAdded, cameraCount }: { onAdded: () => void; cameraCo
           {/* Camera type */}
           <div>
             <p className="text-xs text-gray-400 mb-2">What type of camera?</p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {CAMERA_TYPES.map((t) => {
                 const Icon = t.icon;
                 const active = type?.id === t.id;
@@ -349,7 +349,7 @@ function AddCameraForm({ onAdded, cameraCount }: { onAdded: () => void; cameraCo
             <form onSubmit={handleAdd} className="flex flex-col gap-3">
 
               {/* Name + zone */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
                   <label className="text-xs text-gray-400">Camera name</label>
                   <input value={name} onChange={(e) => handleNameChange(e.target.value)} required
@@ -414,7 +414,7 @@ function AddCameraForm({ onAdded, cameraCount }: { onAdded: () => void; cameraCo
               )}
 
               {/* URL + capacity */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
                   <label className="text-xs text-gray-400">Stream address</label>
                   <input value={url} onChange={(e) => setUrl(e.target.value)} required
@@ -484,7 +484,7 @@ export default function CamerasPage() {
   return (
     <div className="flex min-h-screen bg-gray-950 text-gray-100">
       <Sidebar />
-      <main className="flex-1 p-6 max-w-2xl">
+      <main className="flex-1 p-3 sm:p-6 max-w-2xl">
 
         <div className="mb-6">
           <h1 className="text-xl font-bold text-white">Cameras</h1>

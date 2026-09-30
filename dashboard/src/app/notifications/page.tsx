@@ -172,7 +172,7 @@ export default function NotificationsPage() {
   return (
     <div className="flex min-h-screen text-gray-100" style={{ background: BG }}>
       <Sidebar />
-      <main className="flex-1 px-8 py-8 overflow-auto max-w-2xl">
+      <main className="flex-1 px-4 py-4 sm:px-8 sm:py-8 overflow-auto max-w-2xl">
 
         <div className="mb-7">
           <h1 className="text-xl font-bold text-white">Notifications</h1>

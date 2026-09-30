@@ -693,7 +693,7 @@ export default function AttendancePage() {
   return (
     <div className="flex min-h-screen text-gray-100" style={{ background: BG }}>
       <Sidebar />
-      <main className="flex-1 overflow-auto p-5 flex flex-col gap-5 min-w-0">
+      <main className="flex-1 overflow-auto p-3 sm:p-5 flex flex-col gap-5 min-w-0">
 
         {/* ── Header ── */}
         <div className="flex items-start justify-between gap-4">

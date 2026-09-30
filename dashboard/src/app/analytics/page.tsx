@@ -66,7 +66,7 @@ function DayDetail({ point, allData, onClose }: { point: AttendancePoint; allDat
         </div>
         <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={16} /></button>
       </div>
-      <div className="p-5 grid grid-cols-3 gap-4">
+      <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="rounded-xl p-4 flex flex-col gap-1 min-w-0" style={{ background: "var(--bg-base)", border: `1px solid ${BORDER}` }}>
           <p className="text-xs whitespace-nowrap" style={{ color: "#6b7280" }}>Attendance</p>
           <p className="text-2xl font-bold text-white tabular-nums">{point.attendance.toLocaleString()}</p>

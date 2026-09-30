@@ -534,8 +534,9 @@ function SeatDetailPanel({ seat, cameraId, allSeats, zoneLabels, onAction, onClo
   }, [cameraId, useSnapshotFallback, seat.seat_id]);
 
   return (
-    <div className="absolute top-4 right-4 w-64 rounded-xl shadow-2xl z-10 flex flex-col"
-      style={{ background: CARD2, border: `1px solid ${GREEN}40`, maxHeight: "min(560px, calc(100vh - 8rem))", overflow: "hidden" }}>
+    <div
+      className="fixed inset-x-3 top-16 z-30 rounded-xl shadow-2xl flex flex-col sm:absolute sm:inset-auto sm:top-4 sm:right-4 sm:w-64"
+      style={{ background: CARD2, border: `1px solid ${GREEN}40`, maxHeight: "min(560px, calc(100vh - 6rem))", overflow: "hidden" }}>
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${BORDER}` }}>
         <div>
           <p style={{ fontSize: 13, fontWeight: 700, color: GREEN, fontFamily: "monospace" }}>UNIT {seat.seat_id}</p>
@@ -851,9 +852,9 @@ function CameraSeatView({ camera }: { camera: Camera }) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-5 flex flex-col gap-5">
+      <div className="flex-1 overflow-auto p-3 sm:p-5 flex flex-col gap-4 sm:gap-5">
         {/* Stat cards */}
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <StatCard label="Capacity Utilization" value={`${utilPct}.${Math.abs(utilPct % 10)}%`} change="+2.1%" />
           <StatCard label="Occupied Units" value={occupied.toString()} sub={`of ${cap}`} valueColour="#ff4d6d" />
           <StatCard label="Reserved Seats" value={reserved.toString()} sub="Reserved" valueColour="#9b5de5" />
@@ -926,7 +927,7 @@ function CameraSeatView({ camera }: { camera: Camera }) {
         </div>
 
         {/* Bottom 2-col */}
-        <div className="grid grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <IntelligenceFeed seats={mergedSeats} camera={camera} connected={connected} />
           <UnitBreakdown seats={mergedSeats} camera={camera} />
         </div>

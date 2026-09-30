@@ -10,7 +10,7 @@ import { DEMO_MODE } from "@/lib/demo";
 import {
   Radio, Armchair, ClipboardList, BarChart2,
   PencilRuler, Camera, Users, LogOut, ChevronDown, Cctv, Bell, CalendarDays,
-  Moon, Sun,
+  Moon, Sun, Menu, X,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 
@@ -192,10 +192,63 @@ export function Sidebar() {
 
   const visibleNav = ALL_NAV.filter((item) => allowedPages.includes(item.id));
 
+  // Mobile drawer state — sidebar is hidden by default at phone widths and
+  // slides in when the top-bar hamburger is tapped. Auto-closes when the
+  // route changes (nav tap), so users don't have to close it themselves.
+  const [mobileOpen, setMobileOpen] = useState(false);
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
+
   return (
-    <aside className="w-56 shrink-0 flex flex-col" style={{ background: BG, borderRight: `1px solid ${DIVIDER}` }}>
-      {/* Brand */}
-      <div className="px-5 pt-6 pb-5 flex items-center gap-3">
+    <>
+      {/* Mobile top bar (only visible < md). Fixed so it stays put while
+         the page content scrolls underneath. */}
+      <div
+        className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between px-4 h-14"
+        style={{ background: BG, borderBottom: `1px solid ${DIVIDER}` }}
+      >
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+            style={{ background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)" }}>
+            <Radio size={12} className="text-white" strokeWidth={2} />
+          </div>
+          <span className="text-sm font-bold text-white tracking-tight">Kyro</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setMobileOpen((v) => !v)}
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          className="w-9 h-9 rounded-lg flex items-center justify-center"
+          style={{ color: "#e5e7eb" }}
+        >
+          {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+        </button>
+      </div>
+
+      {/* Spacer that pushes page content below the fixed mobile top bar. */}
+      <div className="md:hidden h-14 shrink-0" aria-hidden />
+
+      {/* Backdrop for the mobile drawer. */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-30 bg-black/60"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden
+        />
+      )}
+
+      <aside
+        className={
+          // On mobile: fixed overlay drawer, slides in from the left.
+          // On desktop (md+): plain inline sidebar as before.
+          "flex flex-col shrink-0 " +
+          "fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-200 " +
+          (mobileOpen ? "translate-x-0" : "-translate-x-full") + " " +
+          "md:static md:translate-x-0 md:w-56 md:transition-none"
+        }
+        style={{ background: BG, borderRight: `1px solid ${DIVIDER}` }}
+      >
+      {/* Brand — hidden on mobile because the top bar already shows it */}
+      <div className="hidden md:flex px-5 pt-6 pb-5 items-center gap-3">
         <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
           style={{ background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)" }}>
           <Radio size={14} className="text-white" strokeWidth={2} />
@@ -205,6 +258,9 @@ export function Sidebar() {
           <p className="text-xs mt-0.5" style={{ color: "#6b7280" }}>Vision Intelligence</p>
         </div>
       </div>
+      {/* Small top padding on mobile so the first nav item isn't flush against
+         the drawer's top edge. */}
+      <div className="md:hidden h-3" aria-hidden />
 
       {/* AI question alert — shown on every page when questions are pending */}
       {pendingReviews > 0 && (
@@ -273,5 +329,6 @@ export function Sidebar() {
         </button>
       </div>
     </aside>
+    </>
   );
 }
