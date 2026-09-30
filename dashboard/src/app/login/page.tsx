@@ -110,15 +110,36 @@ export default function LoginPage() {
   async function handleLiveLogin(e: FormEvent) {
     e.preventDefault();
     setLocalError("");
-    // Clear any leftover demo session — live mode always starts fresh
-    localStorage.removeItem("kyro_demo_role");
-    localStorage.removeItem("kyro_demo_last_user");
-    const ok = await login(user, pass);
-    if (ok) {
-      sessionStorage.removeItem("kyro_signed_out");
-      // Hard reload so DEMO_MODE re-evaluates from localStorage (kyro_mode=live)
-      window.location.href = "/attendance";
+    // Cloudflare Pages has no backend to hit — validate against the same
+    // hardcoded accounts as demo, then set up a session locally.
+    if (!validateDemoLogin(user, pass)) {
+      setLocalError("Incorrect credentials");
+      return;
     }
+    let resolvedRole = "viewer";
+    try {
+      const saved = JSON.parse(localStorage.getItem("kyro_demo_users") ?? "[]");
+      const match = saved.find((u: any) => u.username === user && u.is_active);
+      if (match) {
+        resolvedRole = match.role;
+      } else {
+        const hardcoded: Record<string, string> = {
+          "admin": "admin", "sarah.usher": "operator", "james.viewer": "viewer",
+        };
+        resolvedRole = hardcoded[user] ?? "viewer";
+      }
+    } catch {}
+
+    sessionStorage.removeItem("kyro_signed_out");
+    sessionStorage.removeItem("kyro_live_mode");
+    const { DEMO_TOKEN } = await import("@/lib/demo");
+    localStorage.setItem("kyro_token", DEMO_TOKEN);
+    localStorage.setItem("kyro_demo_role", resolvedRole);
+    setDemoMode();
+    localStorage.setItem("kyro_demo_last_user", user);
+
+    const dest = resolvedRole === "viewer" ? "/seating" : "/attendance";
+    window.location.href = dest;
   }
 
   // ── Landing ────────────────────────────────────────────────────────────────
@@ -332,10 +353,7 @@ export default function LoginPage() {
           </button>
 
           <p className="text-xs text-center" style={{ color: "#374151" }}>
-            Backend must be running on{" "}
-            <span className="font-mono" style={{ color: "#4b5563" }}>
-              {process.env.NEXT_PUBLIC_API_URL ?? "localhost:8000"}
-            </span>
+            Sign in with your Kyro account
           </p>
         </form>
       </div>
