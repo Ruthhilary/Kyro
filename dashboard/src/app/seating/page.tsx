@@ -81,6 +81,79 @@ function summariseZones(zones: ZoneDef[]): { hold: number; ignore: number; label
   return { hold, ignore, labels: zones.map((z) => z.label) };
 }
 
+/**
+ * Which rows each zone affects. When the zone was drawn with an explicit
+ * `hold_seats_in_rows` list, use that verbatim. Otherwise fall back to a
+ * demo-friendly default so the operator still sees zones taking effect:
+ *   • hold-seats zone → row "A" (stage-front)
+ *   • ignore zone     → the LAST row present in the current seat list
+ *
+ * In a real live deployment (with a running backend + vision worker) the
+ * pipeline uses actual bbox overlap between seat and zone; this helper is
+ * a demo/local-mode approximation, applied in the browser so the UI
+ * always reflects the rules the operator saved.
+ */
+function rowsAffectedBy(zone: ZoneDef, allRows: string[]): string[] {
+  if (Array.isArray(zone.hold_seats_in_rows) && zone.hold_seats_in_rows.length > 0) {
+    return zone.hold_seats_in_rows;
+  }
+  if (allRows.length === 0) return [];
+  if (zone.zone_type === "ignore") return [allRows[allRows.length - 1]];
+  return [allRows[0]];  // hold_seats default → first row (nearest stage)
+}
+
+/**
+ * Apply the current zone rules to a seat list. Returns a new list where:
+ *   • seats in a hold-seats zone row are flipped to `rota_hold`
+ *     (unless already occupied — real people take precedence)
+ *   • seats in an ignore-zone row get `_ignored=true` (grayed out in UI,
+ *     excluded from occupied/reserved stat counts)
+ * Also returns a per-seat map of which zone(s) affect each seat, so the
+ * seat detail panel can name them.
+ */
+export interface ZoneApplication {
+  seats: (SeatState & { _ignored?: boolean; _zone_labels?: string[] })[];
+  seatZoneMap: Record<string, string[]>;   // seat_id → zone labels affecting it
+}
+function applyZonesToSeats(seats: SeatState[], zones: ZoneDef[]): ZoneApplication {
+  if (zones.length === 0) {
+    return { seats, seatZoneMap: {} };
+  }
+  const allRows = Array.from(new Set(seats.map((s) => s.row))).sort();
+  const seatZoneMap: Record<string, string[]> = {};
+
+  // Build row → { holdZones, ignoreZones } map
+  const rowIsHeldBy:   Record<string, string[]> = {};
+  const rowIsIgnoredBy: Record<string, string[]> = {};
+  for (const zone of zones) {
+    const rows = rowsAffectedBy(zone, allRows);
+    for (const r of rows) {
+      if (zone.zone_type === "ignore") {
+        (rowIsIgnoredBy[r] = rowIsIgnoredBy[r] ?? []).push(zone.label);
+      } else {
+        (rowIsHeldBy[r] = rowIsHeldBy[r] ?? []).push(zone.label);
+      }
+    }
+  }
+
+  const out = seats.map((s) => {
+    const heldBy   = rowIsHeldBy[s.row];
+    const ignoreBy = rowIsIgnoredBy[s.row];
+    const affectingLabels = [...(heldBy ?? []), ...(ignoreBy ?? [])];
+    if (affectingLabels.length > 0) seatZoneMap[s.seat_id] = affectingLabels;
+    if (ignoreBy && ignoreBy.length > 0) {
+      return { ...s, _ignored: true, _zone_labels: affectingLabels };
+    }
+    if (heldBy && heldBy.length > 0 && s.state !== "occupied" && s.state !== "reserved") {
+      return { ...s, state: "rota_hold" as const, _zone_labels: affectingLabels };
+    }
+    if (affectingLabels.length > 0) return { ...s, _zone_labels: affectingLabels };
+    return s;
+  });
+
+  return { seats: out, seatZoneMap };
+}
+
 // Compact display of the zones the system currently knows about for this
 // camera — reassures the operator that a saved zone is actually in force.
 function ZonesBadge({ zones }: { zones: ZoneDef[] }) {
@@ -171,24 +244,32 @@ function DotSeatMap({ seats, onSelect, selectedId, zoom }: {
         {rowKeys.map((row) => (
           <div key={row} className="flex items-center" style={{ gap }}>
             <span style={{ fontSize: 9, color: "var(--border-subtle)", width: 12, textAlign: "right", marginRight: 4, fontFamily: "monospace" }}>{row}</span>
-            {rows[row].sort((a, b) => a.number - b.number).map((seat) => (
-              <button key={seat.seat_id}
-                onClick={() => onSelect(seat)}
-                title={`${seat.seat_id} · ${seat.state}`}
-                style={{
-                  width: dotSize, height: dotSize,
-                  borderRadius: "50%",
-                  background: DOT_COLOURS[seat.state] ?? "var(--border-subtle)",
-                  border: selectedId === seat.seat_id ? `2px solid ${GREEN}` : "none",
-                  cursor: "pointer",
-                  transition: "transform 0.1s",
-                  flexShrink: 0,
-                  boxShadow: seat.state === "occupied" ? "0 0 4px #ff4d6d40" : undefined,
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.3)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-              />
-            ))}
+            {rows[row].sort((a, b) => a.number - b.number).map((seat) => {
+              const s = seat as SeatState & { _ignored?: boolean; _zone_labels?: string[] };
+              const ignored = s._ignored === true;
+              const zoneNote = s._zone_labels?.length ? ` · in "${s._zone_labels.join("/")}"` : "";
+              return (
+                <button key={s.seat_id}
+                  onClick={() => onSelect(s)}
+                  title={`${s.seat_id} · ${ignored ? "excluded (in ignore-zone)" : s.state}${zoneNote}`}
+                  style={{
+                    width: dotSize, height: dotSize,
+                    borderRadius: "50%",
+                    background: ignored ? "transparent" : (DOT_COLOURS[s.state] ?? "var(--border-subtle)"),
+                    border: selectedId === s.seat_id
+                      ? `2px solid ${GREEN}`
+                      : ignored ? "1px dashed var(--border-strong)" : "none",
+                    opacity: ignored ? 0.35 : 1,
+                    cursor: "pointer",
+                    transition: "transform 0.1s",
+                    flexShrink: 0,
+                    boxShadow: s.state === "occupied" && !ignored ? "0 0 4px #ff4d6d40" : undefined,
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.3)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                />
+              );
+            })}
           </div>
         ))}
       </div>
@@ -365,26 +446,96 @@ function UnitBreakdown({ seats, camera }: { seats: SeatState[]; camera: Camera }
   );
 }
 
+// Small inline schematic that shows THIS seat's position among the others.
+// Rendered in demo mode (no camera image) and as a fallback when a live feed
+// errors — so the user always gets a "here's the seat" visual, even without
+// a real camera feed.
+function MiniSeatSchematic({ seat, allSeats }: { seat: SeatState; allSeats: SeatState[] }) {
+  const rowsMap: Record<string, SeatState[]> = {};
+  for (const s of allSeats) (rowsMap[s.row] = rowsMap[s.row] ?? []).push(s);
+  const rowKeys = Object.keys(rowsMap).sort();
+  return (
+    <div className="absolute inset-0 p-2 flex flex-col justify-center gap-1"
+      style={{ background: "linear-gradient(135deg,var(--bg-card),var(--bg-inset))" }}>
+      {/* Stage marker */}
+      <div className="mx-auto mb-1 px-2 py-0.5 rounded" style={{ background: "var(--border-subtle)" }}>
+        <span style={{ fontSize: 7, color: "var(--text-tertiary)", letterSpacing: "0.15em", fontFamily: "monospace" }}>STAGE</span>
+      </div>
+      {rowKeys.slice(0, 10).map((row) => {
+        const seatsInRow = rowsMap[row].sort((a, b) => a.number - b.number).slice(0, 20);
+        return (
+          <div key={row} className="flex items-center justify-center gap-0.5">
+            {seatsInRow.map((s) => {
+              const isThis = s.seat_id === seat.seat_id;
+              const bg = isThis
+                ? "#00ff88"
+                : s.state === "occupied" ? "#ff4d6d"
+                : s.state === "reserved" ? "#9b5de5"
+                : s.state === "rota_hold" ? "#9b5de5"
+                : "var(--border-subtle)";
+              return (
+                <span key={s.seat_id}
+                  style={{
+                    width: isThis ? 6 : 4, height: isThis ? 6 : 4,
+                    borderRadius: "50%", background: bg,
+                    boxShadow: isThis ? "0 0 6px #00ff88" : undefined,
+                  }} />
+              );
+            })}
+          </div>
+        );
+      })}
+      {seat.state === "occupied" && (
+        <p className="mt-1 text-center" style={{ fontSize: 8, color: "#ff4d6d", fontFamily: "monospace" }}>
+          👤 SEATED · TRACK #{seat.occupying_track_id ?? "—"}
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ─── Seat detail panel ────────────────────────────────────────────────────────
-function SeatDetailPanel({ seat, cameraId, onAction, onClose }: {
-  seat: SeatState; cameraId: string; onAction: (a: SeatAction) => void; onClose: () => void;
+function SeatDetailPanel({ seat, cameraId, allSeats, zoneLabels, onAction, onClose }: {
+  seat: SeatState;
+  cameraId: string;
+  allSeats: SeatState[];
+  zoneLabels?: string[];
+  onAction: (a: SeatAction) => void;
+  onClose: () => void;
 }) {
   const isReserved = seat.state === "reserved";
   const [reserving, setReserving] = useState(false);
   const [name, setName] = useState(seat.reserved_for ?? "");
   const [snapshotSrc, setSnapshotSrc] = useState<string | null>(null);
+  const [feedErrored, setFeedErrored] = useState(false);
+  const [useSnapshotFallback, setUseSnapshotFallback] = useState(false);
 
   useEffect(() => { setName(seat.reserved_for ?? ""); setReserving(false); }, [seat.seat_id]);
 
-  // Live camera stream — MJPEG, no polling.
+  // Live camera feed. Try the MJPEG stream first (real-time, no polling).
+  // If it errors (backend down, wrong URL), fall back to the /snapshot
+  // endpoint, refreshed every 2 seconds.
   useEffect(() => {
-    if (inDemoMode()) return;
+    if (inDemoMode()) { setSnapshotSrc(null); return; }
+    setFeedErrored(false);
+    setUseSnapshotFallback(false);
     setSnapshotSrc(camerasApi.streamUrl(cameraId));
-  }, [cameraId]);
+  }, [cameraId, seat.seat_id]);
+
+  useEffect(() => {
+    if (inDemoMode() || !useSnapshotFallback) return;
+    const token = typeof window !== "undefined" ? localStorage.getItem("kyro_token") : null;
+    const bust = () => setSnapshotSrc(
+      `${camerasApi.snapshotUrl(cameraId)}?t=${Date.now()}${token ? `&token=${encodeURIComponent(token)}` : ""}`
+    );
+    bust();
+    const t = setInterval(bust, 2000);
+    return () => clearInterval(t);
+  }, [cameraId, useSnapshotFallback, seat.seat_id]);
 
   return (
     <div className="absolute top-4 right-4 w-64 rounded-xl shadow-2xl z-10 flex flex-col"
-      style={{ background: CARD2, border: `1px solid ${GREEN}40`, maxHeight: "min(480px, calc(100vh - 8rem))", overflow: "hidden" }}>
+      style={{ background: CARD2, border: `1px solid ${GREEN}40`, maxHeight: "min(560px, calc(100vh - 8rem))", overflow: "hidden" }}>
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${BORDER}` }}>
         <div>
           <p style={{ fontSize: 13, fontWeight: 700, color: GREEN, fontFamily: "monospace" }}>UNIT {seat.seat_id}</p>
@@ -395,29 +546,46 @@ function SeatDetailPanel({ seat, cameraId, onAction, onClose }: {
 
       {/* Camera feed — compact height */}
       <div className="mx-3 mt-3 rounded-lg overflow-hidden relative shrink-0"
-        style={{ height: 100, background: "var(--bg-inset)", border: `1px solid ${BORDER}` }}>
-        {inDemoMode() ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1"
-            style={{ background: "linear-gradient(135deg,var(--bg-card),var(--bg-inset))" }}>
-            <CameraIcon size={18} style={{ color: "var(--border-subtle)" }} />
-            <p style={{ fontSize: 9, color: "var(--border-subtle)" }}>Live feed — live mode</p>
-          </div>
+        style={{ height: 120, background: "var(--bg-inset)", border: `1px solid ${BORDER}` }}>
+        {inDemoMode() || feedErrored ? (
+          <MiniSeatSchematic seat={seat} allSeats={allSeats} />
         ) : snapshotSrc ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={snapshotSrc} alt="Live feed" className="w-full h-full object-cover"
-            onError={() => setSnapshotSrc(null)} />
+          <img
+            src={snapshotSrc}
+            alt="Live feed"
+            className="w-full h-full object-cover"
+            onError={() => {
+              // First error → try snapshot fallback. Second error → schematic.
+              if (!useSnapshotFallback) setUseSnapshotFallback(true);
+              else setFeedErrored(true);
+            }}
+          />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <p style={{ fontSize: 9, color: "#374151" }}>No feed</p>
-          </div>
+          <MiniSeatSchematic seat={seat} allSeats={allSeats} />
         )}
-        {/* Live badge */}
+        {/* Feed badge */}
         <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded"
           style={{ background: "rgba(0,0,0,0.7)" }}>
-          <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: GREEN }} />
-          <span style={{ fontSize: 8, color: GREEN, fontWeight: 700 }}>LIVE</span>
+          <span
+            className={inDemoMode() || feedErrored ? "" : "animate-pulse"}
+            style={{ width: 6, height: 6, borderRadius: "50%", background: inDemoMode() || feedErrored ? "#f59e0b" : GREEN, display: "inline-block" }}
+          />
+          <span style={{ fontSize: 8, color: inDemoMode() || feedErrored ? "#f59e0b" : GREEN, fontWeight: 700 }}>
+            {inDemoMode() ? "SCHEMATIC" : feedErrored ? "OFFLINE" : "LIVE"}
+          </span>
         </div>
       </div>
+
+      {/* Zone rules applied to this seat */}
+      {zoneLabels && zoneLabels.length > 0 && (
+        <div className="mx-3 mt-2 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(155,93,229,0.12)", border: "1px solid rgba(155,93,229,0.35)" }}>
+          <p style={{ fontSize: 9, color: "#c4b5fd", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>Zone rule</p>
+          <p style={{ fontSize: 10, color: "#a5b4fc" }}>
+            In zone{zoneLabels.length > 1 ? "s" : ""}: {zoneLabels.join(", ")}
+          </p>
+        </div>
+      )}
 
       <div className="px-4 py-3 flex flex-col gap-2 overflow-y-auto" style={{ flex: 1 }}>
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "var(--bg-inset)" }}>
@@ -578,8 +746,10 @@ function CameraSeatView({ camera }: { camera: Camera }) {
       .catch(() => { setOverrides({}); setLoadedId(camera.camera_id); });
   }, [camera.camera_id, loadedId, isQueue]);
 
-  const rawSeats    = data?.seat_states ?? [];
-  const mergedSeats = rawSeats.map((s) => overrides[s.seat_id] ? { ...s, ...overrides[s.seat_id] } : s);
+  const rawSeats     = data?.seat_states ?? [];
+  const overriden    = rawSeats.map((s) => overrides[s.seat_id] ? { ...s, ...overrides[s.seat_id] } : s);
+  // Apply the zone rules the operator saved (in demo/local mode).
+  const { seats: mergedSeats, seatZoneMap } = applyZonesToSeats(overriden, zones);
 
   useEffect(() => {
     if (!selectedSeat) return;
@@ -642,12 +812,15 @@ function CameraSeatView({ camera }: { camera: Camera }) {
   }
 
   // Stats
-  const occupied = mergedSeats.filter(s => s.state === "occupied").length;
-  const free     = mergedSeats.filter(s => s.state === "available" || s.state === "likely_available").length;
-  const away     = mergedSeats.filter(s => s.state === "temporarily_vacant").length;
-  const reserved = mergedSeats.filter(s => s.state === "reserved").length;
-  const onStage  = mergedSeats.filter(s => s.state === "rota_hold").length;
-  const cap      = camera.zone_capacity || mergedSeats.length || 1;
+  // Ignore-zone seats are excluded from every count — that's the whole
+  // point of an ignore zone (e.g. toilet/exit area).
+  const countable = mergedSeats.filter((s) => !(s as any)._ignored);
+  const occupied  = countable.filter(s => s.state === "occupied").length;
+  const free      = countable.filter(s => s.state === "available" || s.state === "likely_available").length;
+  const away      = countable.filter(s => s.state === "temporarily_vacant").length;
+  const reserved  = countable.filter(s => s.state === "reserved").length;
+  const onStage   = countable.filter(s => s.state === "rota_hold").length;
+  const cap       = camera.zone_capacity || countable.length || 1;
   const utilPct  = Math.round((occupied / cap) * 100);
 
   return (
@@ -743,6 +916,8 @@ function CameraSeatView({ camera }: { camera: Camera }) {
               <SeatDetailPanel
                 seat={selectedSeat}
                 cameraId={camera.camera_id}
+                allSeats={mergedSeats}
+                zoneLabels={seatZoneMap[selectedSeat.seat_id]}
                 onAction={handleSeatAction}
                 onClose={() => setSelectedSeat(null)}
               />
