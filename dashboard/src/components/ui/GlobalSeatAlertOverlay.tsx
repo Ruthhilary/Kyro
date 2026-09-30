@@ -26,7 +26,7 @@ export function GlobalSeatAlertOverlay() {
           <div
             key={alert.alert_id}
             className="rounded-xl overflow-hidden cursor-pointer shadow-lg"
-            style={{ background: "#0d0f1a", border: "1px solid #2d3148" }}
+            style={{ background: "var(--bg-base)", border: "1px solid var(--border-strong)" }}
             onClick={() => setExpanded(alert)}
           >
             <div className="relative">
@@ -62,10 +62,10 @@ export function GlobalSeatAlertOverlay() {
         >
           <div
             className="w-full max-w-lg rounded-xl overflow-hidden"
-            style={{ background: "#0d0f1a", border: "1px solid #2d3148" }}
+            style={{ background: "var(--bg-base)", border: "1px solid var(--border-strong)" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #2d3148" }}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border-strong)" }}>
               <span className="text-sm font-semibold text-white">Seat {expanded.seat_id} — available</span>
               <button onClick={() => setExpanded(null)} className="text-gray-400 hover:text-white">
                 <X size={16} />

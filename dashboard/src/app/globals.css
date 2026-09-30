@@ -1,3 +1,108 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── Theme tokens ─────────────────────────────────────────────────────────
+   Defined here so every inline style like `background: var(--bg-card)`
+   flips automatically when the html[data-theme] attribute changes.
+   Dark is the default (matches the original hardcoded palette).
+   ─────────────────────────────────────────────────────────────────────── */
+
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Backgrounds */
+  --bg-deepest:        #070910;
+  --bg-base:           #0d0f1a;
+  --bg-inset:          #0a0c18;
+  --bg-card:           #13152a;
+  --bg-hover:          #1e2235;
+  --bg-elevated:       #1a1d33;
+
+  /* Borders */
+  --border-subtle:     #1e2235;
+  --border-strong:     #2d3148;
+  --border-input:      #374151;
+
+  /* Text */
+  --text-primary:      #ffffff;
+  --text-secondary:    #e5e7eb;
+  --text-tertiary:     #9ca3af;
+  --text-muted:        #6b7280;
+  --text-faint:        #4b5563;
+  --text-disabled:     #374151;
+
+  /* Gradient anchors used on the login screen */
+  --grad-login-a:      #070910;
+  --grad-login-b:      #0d0f1a;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Backgrounds — inverted to a clean light palette */
+  --bg-deepest:        #f3f4f6;
+  --bg-base:           #ffffff;
+  --bg-inset:          #f9fafb;
+  --bg-card:           #ffffff;
+  --bg-hover:          #f3f4f6;
+  --bg-elevated:       #f9fafb;
+
+  /* Borders */
+  --border-subtle:     #e5e7eb;
+  --border-strong:     #d1d5db;
+  --border-input:      #d1d5db;
+
+  /* Text */
+  --text-primary:      #111827;
+  --text-secondary:    #1f2937;
+  --text-tertiary:     #4b5563;
+  --text-muted:        #6b7280;
+  --text-faint:        #9ca3af;
+  --text-disabled:     #d1d5db;
+
+  /* Gradient anchors for the login screen */
+  --grad-login-a:      #f9fafb;
+  --grad-login-b:      #ffffff;
+}
+
+/* Body sits on the base background so bare pages still theme correctly. */
+html, body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+
+/* ─── Tailwind class overrides for light mode ──────────────────────────────
+   Many components hardcode Tailwind classes like `text-white`, `bg-gray-900`,
+   `text-gray-100`. Retarget these in light mode so we don't have to rewrite
+   every className string.
+   ─────────────────────────────────────────────────────────────────────── */
+
+:root[data-theme="light"] .text-white          { color: var(--text-primary)   !important; }
+:root[data-theme="light"] .text-gray-100       { color: var(--text-primary)   !important; }
+:root[data-theme="light"] .text-gray-200       { color: var(--text-secondary) !important; }
+:root[data-theme="light"] .text-gray-300       { color: var(--text-secondary) !important; }
+:root[data-theme="light"] .text-gray-400       { color: var(--text-tertiary)  !important; }
+:root[data-theme="light"] .text-gray-500       { color: var(--text-muted)     !important; }
+:root[data-theme="light"] .text-gray-600       { color: var(--text-muted)     !important; }
+:root[data-theme="light"] .text-gray-700       { color: var(--text-faint)     !important; }
+
+:root[data-theme="light"] .bg-gray-900         { background-color: var(--bg-card)    !important; }
+:root[data-theme="light"] .bg-gray-800         { background-color: var(--bg-inset)   !important; }
+:root[data-theme="light"] .bg-gray-700         { background-color: var(--bg-hover)   !important; }
+
+:root[data-theme="light"] .border-gray-700     { border-color: var(--border-subtle) !important; }
+:root[data-theme="light"] .border-gray-800     { border-color: var(--border-subtle) !important; }
+:root[data-theme="light"] .border-gray-900     { border-color: var(--border-strong) !important; }
+
+/* Placeholder text is light in light mode */
+:root[data-theme="light"] input::placeholder,
+:root[data-theme="light"] textarea::placeholder { color: var(--text-faint); }
+
+/* Smooth theme transitions without a jarring flash */
+html, body, main, aside, header, footer, section, article, div, span,
+button, input, textarea, select, a, p, h1, h2, h3, h4, h5, h6,
+li, ul, ol, table, tr, td, th {
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}

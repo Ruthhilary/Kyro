@@ -64,7 +64,7 @@ export function AttendanceChart({ data, height = 200 }: AttendanceChartProps) {
             x2={W - PAD.right}
             y1={yScale(t)}
             y2={yScale(t)}
-            stroke="#1f2937"
+            stroke="var(--bg-hover)"
             strokeWidth={1}
           />
         ))}

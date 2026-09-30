@@ -10,9 +10,9 @@ const inDemoMode = () => typeof window !== "undefined" && localStorage.getItem("
 import { Eye, EyeOff, KeyRound, X, Check, Pencil } from "lucide-react";
 import type { UserResponse } from "@/types";
 
-const BG     = "#0d0f1a";
-const CARD   = "#13152a";
-const BORDER = "#1e2235";
+const BG     = "var(--bg-base)";
+const CARD   = "var(--bg-card)";
+const BORDER = "var(--border-subtle)";
 
 // ─── All pages ────────────────────────────────────────────────────────────────
 
@@ -111,7 +111,7 @@ function PagePicker({ selected, onChange }: {
             className="text-xs px-3 py-1.5 rounded-full border transition-all font-medium"
             style={on
               ? { background: col.bg, color: col.text, borderColor: col.text + "60" }
-              : { background: "transparent", color: "#4b5563", borderColor: "#1e2235" }}>
+              : { background: "transparent", color: "#4b5563", borderColor: "var(--border-subtle)" }}>
             {on && "✓ "}{label}
           </button>
         );
@@ -234,7 +234,7 @@ function PasswordDialog({ username, onPasswordChanged, onClose }: {
 
         {mode === "view" ? (
           <>
-            <div className="flex items-center gap-2 rounded-lg px-3 py-3 mb-3" style={{ background: "#0d0f1a", border: "1px solid #374151" }}>
+            <div className="flex items-center gap-2 rounded-lg px-3 py-3 mb-3" style={{ background: "var(--bg-base)", border: "1px solid #374151" }}>
               <span className="flex-1 text-sm font-mono text-white tracking-wider select-all">
                 {showPw ? pw : "•".repeat(Math.min(pw.length, 16))}
               </span>
@@ -253,11 +253,11 @@ function PasswordDialog({ username, onPasswordChanged, onClose }: {
               </button>
               {isHardcoded && hasCustomOverride && (
                 <button onClick={resetToDefault}
-                  className="py-2 px-3 rounded-lg text-xs text-gray-400 hover:text-white" style={{ background: "#1e2235" }}>
+                  className="py-2 px-3 rounded-lg text-xs text-gray-400 hover:text-white" style={{ background: "var(--border-subtle)" }}>
                   Reset
                 </button>
               )}
-              <button onClick={onClose} className="py-2 px-4 rounded-lg text-sm text-gray-400 hover:text-white" style={{ background: "#1e2235" }}>
+              <button onClick={onClose} className="py-2 px-4 rounded-lg text-sm text-gray-400 hover:text-white" style={{ background: "var(--border-subtle)" }}>
                 Close
               </button>
             </div>
@@ -267,7 +267,7 @@ function PasswordDialog({ username, onPasswordChanged, onClose }: {
             <div className="flex flex-col gap-3 mb-3">
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">New password (min 8 characters)</label>
-                <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: "#0d0f1a", border: "1px solid #374151" }}>
+                <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: "var(--bg-base)", border: "1px solid #374151" }}>
                   <input type={showPw ? "text" : "password"} value={newPw} onChange={(e) => setNewPw(e.target.value)}
                     autoFocus minLength={8} autoComplete="new-password"
                     className="flex-1 bg-transparent text-sm text-white focus:outline-none" />
@@ -281,7 +281,7 @@ function PasswordDialog({ username, onPasswordChanged, onClose }: {
                 <input type={showPw ? "text" : "password"} value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)}
                   minLength={8} autoComplete="new-password"
                   className="w-full text-sm text-white rounded-lg px-3 py-2 focus:outline-none"
-                  style={{ background: "#0d0f1a", border: "1px solid #374151" }} />
+                  style={{ background: "var(--bg-base)", border: "1px solid #374151" }} />
               </div>
               {err && <p className="text-xs text-red-400 rounded-lg px-3 py-2" style={{ background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.3)" }}>{err}</p>}
               {ok  && <p className="text-xs text-green-400 rounded-lg px-3 py-2" style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)" }}>{ok}</p>}
@@ -292,7 +292,7 @@ function PasswordDialog({ username, onPasswordChanged, onClose }: {
                 Save password
               </button>
               <button onClick={() => { setMode("view"); setNewPw(""); setConfirmPw(""); setErr(null); setOk(null); }}
-                className="flex-1 py-2 rounded-lg text-sm text-gray-400 hover:text-white" style={{ background: "#1e2235" }}>
+                className="flex-1 py-2 rounded-lg text-sm text-gray-400 hover:text-white" style={{ background: "var(--border-subtle)" }}>
                 Cancel
               </button>
             </div>
@@ -333,7 +333,7 @@ function AccessEditor({ user, onSaved, onCancel }: {
   }
 
   return (
-    <div className="px-4 py-4 flex flex-col gap-3" style={{ background: "#0a0c18", borderTop: `1px solid ${BORDER}` }}>
+    <div className="px-4 py-4 flex flex-col gap-3" style={{ background: "var(--bg-inset)", borderTop: `1px solid ${BORDER}` }}>
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-white">Edit access for {user.display_name || user.username}</p>
         <span className="text-xs px-2 py-0.5 rounded-full"
@@ -350,7 +350,7 @@ function AccessEditor({ user, onSaved, onCancel }: {
           style={{ background: "#4f46e5" }}>
           <Check size={12} />{saving ? "Saving…" : "Save access"}
         </button>
-        <button onClick={onCancel} className="px-4 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white" style={{ background: "#1e2235" }}>Cancel</button>
+        <button onClick={onCancel} className="px-4 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white" style={{ background: "var(--border-subtle)" }}>Cancel</button>
       </div>
     </div>
   );

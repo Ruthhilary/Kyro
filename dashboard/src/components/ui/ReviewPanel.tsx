@@ -79,13 +79,13 @@ function DemoSnapshot({ review }: { review: ReviewRequest }) {
   const nx = Math.round((cx / 1280) * 320);
   const ny = Math.round((cy / 720)  * 180);
   return (
-    <div className="relative w-full overflow-hidden rounded-lg" style={{ background: "#0a0c18", border: "1px solid #2d3148" }}>
+    <div className="relative w-full overflow-hidden rounded-lg" style={{ background: "var(--bg-inset)", border: "1px solid var(--border-strong)" }}>
       <svg viewBox="0 0 320 180" className="w-full" style={{ maxHeight: 140 }}>
-        <rect width="320" height="180" fill="#0d0f1a" />
+        <rect width="320" height="180" fill="var(--bg-base)" />
         {[60, 80, 100, 120, 140].map((y, i) => (
-          <rect key={i} x="20" y={y} width="280" height="10" rx="2" fill="#1e2235" opacity="0.7" />
+          <rect key={i} x="20" y={y} width="280" height="10" rx="2" fill="var(--border-subtle)" opacity="0.7" />
         ))}
-        <rect x="60" y="10" width="200" height="20" rx="4" fill="#1a1c2e" stroke="#2d3148" strokeWidth="1" />
+        <rect x="60" y="10" width="200" height="20" rx="4" fill="var(--bg-hover)" stroke="var(--border-strong)" strokeWidth="1" />
         <text x="160" y="24" textAnchor="middle" fontSize="8" fill="#4b5563" fontFamily="sans-serif" letterSpacing="2">STAGE</text>
         <circle cx={nx} cy={ny} r="10" fill="#6366f1" opacity="0.9" />
         <rect x={nx - 6} y={ny + 10} width="12" height="16" rx="3" fill="#6366f1" opacity="0.9" />
@@ -93,7 +93,7 @@ function DemoSnapshot({ review }: { review: ReviewRequest }) {
           <animate attributeName="r" values="22;28;22" dur="1.5s" repeatCount="indefinite" />
           <animate attributeName="opacity" values="0.8;0.2;0.8" dur="1.5s" repeatCount="indefinite" />
         </circle>
-        <rect x="4" y="4" width="70" height="14" rx="3" fill="#13152a" opacity="0.9" />
+        <rect x="4" y="4" width="70" height="14" rx="3" fill="var(--bg-card)" opacity="0.9" />
         <text x="8" y="14" fontSize="8" fill="#a5b4fc" fontFamily="sans-serif">Kyro flagged ↑</text>
       </svg>
       <div className="absolute bottom-1.5 right-2 text-xs" style={{ color: "#4b5563" }}>Demo view</div>
@@ -128,7 +128,7 @@ function LiveSnapshot({ cameraId, reviewId }: { cameraId: string; reviewId: stri
   }, [fetchSnap]);
 
   if (loading) return (
-    <div className="w-full h-24 rounded-lg flex items-center justify-center" style={{ background: "#0a0c18", border: "1px solid #2d3148" }}>
+    <div className="w-full h-24 rounded-lg flex items-center justify-center" style={{ background: "var(--bg-inset)", border: "1px solid var(--border-strong)" }}>
       <span className="text-xs" style={{ color: "#4b5563" }}>Loading snapshot…</span>
     </div>
   );
@@ -242,8 +242,8 @@ function ReviewCard({
 
   return (
     <div className="w-80 rounded-xl shadow-2xl overflow-hidden"
-      style={{ background: "#13152a", border: `1px solid ${colours.border}` }}>
-      <div className="h-0.5 w-full" style={{ background: "#1e2235" }}>
+      style={{ background: "var(--bg-card)", border: `1px solid ${colours.border}` }}>
+      <div className="h-0.5 w-full" style={{ background: "var(--border-subtle)" }}>
         <div className="h-full transition-all duration-1000"
           style={{ width: `${pct}%`, background: colours.border }} />
       </div>
@@ -276,13 +276,13 @@ function ReviewCard({
         {review.options.map((opt) => (
           <button key={opt} onClick={() => answer(opt)} disabled={answering}
             className="w-full text-left px-3 py-2 rounded-lg text-sm transition-all disabled:opacity-50"
-            style={{ background: "#1e2235", color: "#d1d5db" }}
+            style={{ background: "var(--border-subtle)", color: "#d1d5db" }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLButtonElement).style.background = colours.badge;
               (e.currentTarget as HTMLButtonElement).style.color = colours.text;
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "#1e2235";
+              (e.currentTarget as HTMLButtonElement).style.background = "var(--border-subtle)";
               (e.currentTarget as HTMLButtonElement).style.color = "#d1d5db";
             }}>{opt}</button>
         ))}
@@ -336,7 +336,7 @@ function UnansweredPanel({ cameraId }: { cameraId: string }) {
     <div className="fixed bottom-6 left-6 z-40 w-80">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl"
-        style={{ background: "#13152a", border: "1px solid rgba(245,158,11,0.4)" }}>
+        style={{ background: "var(--bg-card)", border: "1px solid rgba(245,158,11,0.4)" }}>
         <Bell size={14} className="text-amber-400 shrink-0" />
         <button onClick={() => setOpen((p) => !p)}
           className="flex items-center gap-2 flex-1 text-sm font-medium text-left"
@@ -364,7 +364,7 @@ function UnansweredPanel({ cameraId }: { cameraId: string }) {
 
             return (
               <div key={r.review_id} className="rounded-xl overflow-hidden transition-all"
-                style={{ background: isExpanded ? "#0f1120" : "#13152a",
+                style={{ background: isExpanded ? "var(--bg-card)" : "var(--bg-card)",
                          border: `1px solid ${isExpanded ? colours.border : colours.border + "40"}` }}>
 
                 {/* Collapsed row — tap to expand */}
@@ -404,13 +404,13 @@ function UnansweredPanel({ cameraId }: { cameraId: string }) {
                       <button key={opt} onClick={() => answer(r, opt)}
                         disabled={!!answering}
                         className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all disabled:opacity-40"
-                        style={{ background: "#1e2235", color: "#d1d5db" }}
+                        style={{ background: "var(--border-subtle)", color: "#d1d5db" }}
                         onMouseEnter={(e) => {
                           (e.currentTarget as HTMLButtonElement).style.background = colours.badge;
                           (e.currentTarget as HTMLButtonElement).style.color = colours.text;
                         }}
                         onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLButtonElement).style.background = "#1e2235";
+                          (e.currentTarget as HTMLButtonElement).style.background = "var(--border-subtle)";
                           (e.currentTarget as HTMLButtonElement).style.color = "#d1d5db";
                         }}>
                         {answering === r.review_id ? "Saving…" : opt}
@@ -450,7 +450,7 @@ export function ReviewPanel({ reviews, cameraId, onDismiss }: ReviewPanelProps) 
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
         {queueLen > 1 && (
           <div className="text-xs px-3 py-1.5 rounded-full"
-            style={{ background: "#1e2235", color: "#9ca3af", border: "1px solid #374151" }}>
+            style={{ background: "var(--border-subtle)", color: "#9ca3af", border: "1px solid #374151" }}>
             +{queueLen - 1} more question{queueLen - 1 !== 1 ? "s" : ""} queued
           </div>
         )}

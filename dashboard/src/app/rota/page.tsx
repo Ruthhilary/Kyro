@@ -19,8 +19,8 @@ const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO === "true";
 function isLiveMode(): boolean { if (typeof window === "undefined") return false; return localStorage.getItem("kyro_mode") === "live"; }
 const inDemoMode = () => typeof window !== "undefined" && localStorage.getItem("kyro_mode") === "demo";
 
-const CARD   = "#0d1117";
-const BORDER = "#1e2235";
+const CARD   = "var(--bg-card)";
+const BORDER = "var(--border-subtle)";
 const INPUT  = "bg-gray-900 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full";
 
 const DEMO_ROTA_KEY = "kyro_demo_rota";
@@ -203,7 +203,7 @@ function EntryEditor({ entry, index, onChange, onRemove }: {
 
   return (
     <div className="rounded-xl p-4 flex flex-col gap-3"
-      style={{ background: "#0a0c18", border: `1px solid ${BORDER}` }}>
+      style={{ background: "var(--bg-inset)", border: `1px solid ${BORDER}` }}>
       <div className="flex items-center gap-2">
         <span className="text-xs px-2 py-0.5 rounded-full font-medium"
           style={{ background: badge.bg, color: badge.text }}>
@@ -316,7 +316,7 @@ function ActiveRota({ cameraId, entries, onDeleted }: {
         const past  = now > end;
         return (
           <div key={e.entry_id} className="flex items-start gap-3 rounded-xl px-4 py-3"
-            style={{ background: live ? "rgba(99,102,241,0.08)" : "#0a0c18",
+            style={{ background: live ? "rgba(99,102,241,0.08)" : "var(--bg-inset)",
                      border: `1px solid ${live ? "#4338ca" : BORDER}` }}>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
@@ -516,7 +516,7 @@ export default function RotaPage() {
   }
 
   return (
-    <div className="flex min-h-screen text-gray-100" style={{ background: "#070911" }}>
+    <div className="flex min-h-screen text-gray-100" style={{ background: "var(--bg-base)" }}>
       <Sidebar />
       <main className="flex-1 p-6 max-w-2xl flex flex-col gap-6">
 

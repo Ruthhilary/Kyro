@@ -10,7 +10,26 @@ import { DEMO_MODE } from "@/lib/demo";
 import {
   Radio, Armchair, ClipboardList, BarChart2,
   PencilRuler, Camera, Users, LogOut, ChevronDown, Cctv, Bell, CalendarDays,
+  Moon, Sun,
 } from "lucide-react";
+import { useTheme } from "@/lib/theme";
+
+function ThemeToggleRow() {
+  const { theme, toggle } = useTheme();
+  const isDark = theme === "dark";
+  const Icon   = isDark ? Sun : Moon;
+  const label  = isDark ? "Light mode" : "Dark mode";
+  return (
+    <button onClick={toggle} aria-label={label}
+      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors w-full text-left"
+      style={{ color: "#6b7280" }}
+      onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+      onMouseLeave={(e) => (e.currentTarget.style.color = "#6b7280")}>
+      <Icon size={16} strokeWidth={1.75} />
+      {label}
+    </button>
+  );
+}
 
 function isLiveMode(): boolean { if (typeof window === "undefined") return false; return localStorage.getItem("kyro_mode") === "live"; }
 const inDemoMode = () => typeof window !== "undefined" && localStorage.getItem("kyro_mode") === "demo";
@@ -40,9 +59,9 @@ const ROLE_LABELS: Record<string, string> = {
   admin: "Administrator", operator: "Operator", viewer: "Viewer", usher: "Usher", counter: "Counter",
 };
 
-const BG     = "#0d0f1a";
+const BG     = "var(--bg-base)";
 const ACTIVE = "#3730a3";
-const DIVIDER = "#1f2937";
+const DIVIDER = "var(--bg-hover)";
 
 function getStoredPages(username: string, role: string): PageId[] {
   try {
@@ -243,6 +262,7 @@ export function Sidebar() {
           </div>
           <ChevronDown size={13} className="text-gray-600 shrink-0" />
         </div>
+        <ThemeToggleRow />
         <button onClick={logout}
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors w-full text-left"
           style={{ color: "#6b7280" }}

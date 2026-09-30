@@ -29,18 +29,18 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-const BG      = "#070910";
-const CARD    = "#0d1020";
-const CARD2   = "#111528";
-const BORDER  = "#1a1f35";
+const BG      = "var(--grad-login-a)";
+const CARD    = "var(--bg-card)";
+const CARD2   = "var(--bg-elevated)";
+const BORDER  = "var(--bg-hover)";
 
 // ─── Zone colour palette ──────────────────────────────────────────────────────
 const ZONE_COLOURS = [
   { icon: "≡",  bg: "#1e1b4b", accent: "#818cf8", mini: "#6366f1" },
   { icon: "⊞",  bg: "#172554", accent: "#60a5fa", mini: "#3b82f6" },
   { icon: "≈",  bg: "#052e16", accent: "#34d399", mini: "#10b981" },
-  { icon: "≡",  bg: "#1c1917", accent: "#fb923c", mini: "#f97316" },
-  { icon: "☀",  bg: "#1c1014", accent: "#f472b6", mini: "#ec4899" },
+  { icon: "≡",  bg: "var(--bg-hover)", accent: "#fb923c", mini: "#f97316" },
+  { icon: "☀",  bg: "var(--bg-hover)", accent: "#f472b6", mini: "#ec4899" },
 ];
 
 function zoneColour(idx: number) { return ZONE_COLOURS[idx % ZONE_COLOURS.length]; }
@@ -110,7 +110,7 @@ function TotalChart({ history, current, timestamps }: { history: number[]; curre
               </linearGradient>
             </defs>
             {[0.25, 0.5, 0.75].map((t) => (
-              <line key={t} x1="0" y1={H * t} x2={W} y2={H * t} stroke="#1a1f35" strokeWidth="0.5" />
+              <line key={t} x1="0" y1={H * t} x2={W} y2={H * t} stroke="var(--bg-hover)" strokeWidth="0.5" />
             ))}
             <path d={areaD} fill="url(#chartGrad)" />
             <path d={pathD} fill="none" stroke="#6366f1" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
@@ -118,7 +118,7 @@ function TotalChart({ history, current, timestamps }: { history: number[]; curre
             <circle cx={parseFloat(lastPt[0])} cy={parseFloat(lastPt[1])} r="4" fill="#6366f1" />
             <circle cx={parseFloat(lastPt[0])} cy={parseFloat(lastPt[1])} r="7" fill="none" stroke="#6366f1" strokeWidth="1" opacity="0.4" />
             {/* Tooltip at current */}
-            <rect x={parseFloat(lastPt[0]) - 22} y={parseFloat(lastPt[1]) - 22} width="44" height="16" rx="4" fill="#1e2235" />
+            <rect x={parseFloat(lastPt[0]) - 22} y={parseFloat(lastPt[1]) - 22} width="44" height="16" rx="4" fill="var(--border-subtle)" />
             <text x={parseFloat(lastPt[0])} y={parseFloat(lastPt[1]) - 11} textAnchor="middle" fontSize="9" fill="#a5b4fc" fontFamily="sans-serif">
               {current.toLocaleString()}
             </text>
@@ -165,7 +165,7 @@ function ZoneCameraCard({ camera, role }: { camera: Camera; role: string }) {
   const isError = !inDemoMode() && health?.status === "error";
 
   return (
-    <div className="relative overflow-hidden rounded-xl" style={{ aspectRatio: "16/9", background: "#0a0c18" }}>
+    <div className="relative overflow-hidden rounded-xl" style={{ aspectRatio: "16/9", background: "var(--bg-inset)" }}>
       {inDemoMode() ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center"
           style={{ background: "linear-gradient(135deg,#1e1b4b,#172554,#052e16)" }}>
@@ -229,7 +229,7 @@ function ZoneTableRow({ camera, idx, role }: { camera: Camera; idx: number; role
   return (
     <tr style={{ borderBottom: `1px solid ${BORDER}`, cursor: "pointer" }}
       onClick={() => window.location.href = "/seating"}
-      onMouseEnter={(e) => (e.currentTarget.style.background = "#111528")}
+      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-elevated)")}
       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
       <td style={{ padding: "14px 16px" }}>
         <div className="flex items-center gap-3">
@@ -302,7 +302,7 @@ type AlertRow = {
 const ALERT_STYLE: Record<string, { icon: string; bg: string; accent: string }> = {
   critical: { icon: "🚨", bg: "#7f1d1d", accent: "#f87171" },
   warning:  { icon: "⚡", bg: "#78350f", accent: "#fbbf24" },
-  offline:  { icon: "📷", bg: "#1f2937", accent: "#9ca3af" },
+  offline:  { icon: "📷", bg: "var(--bg-hover)", accent: "#9ca3af" },
   online:   { icon: "✅", bg: "#064e3b", accent: "#4ade80" },
   review:   { icon: "🎭", bg: "#3730a3", accent: "#a5b4fc" },
 };
@@ -472,8 +472,8 @@ function SystemStatus({ camerasTotal, camerasRunning }: { camerasTotal: number; 
       {/* Orbital graphic */}
       <div className="flex items-center justify-center pb-4 pt-1">
         <svg width="80" height="80" viewBox="0 0 80 80">
-          <ellipse cx="40" cy="40" rx="35" ry="12" fill="none" stroke="#1e2235" strokeWidth="1.5" transform="rotate(-20 40 40)" />
-          <ellipse cx="40" cy="40" rx="35" ry="12" fill="none" stroke="#1e2235" strokeWidth="1.5" transform="rotate(40 40 40)" />
+          <ellipse cx="40" cy="40" rx="35" ry="12" fill="none" stroke="var(--border-subtle)" strokeWidth="1.5" transform="rotate(-20 40 40)" />
+          <ellipse cx="40" cy="40" rx="35" ry="12" fill="none" stroke="var(--border-subtle)" strokeWidth="1.5" transform="rotate(40 40 40)" />
           <circle cx="40" cy="40" r="8" fill="#4f46e5" opacity="0.9" />
           <circle cx="40" cy="40" r="5" fill="#818cf8" />
           <circle cx="70" cy="34" r="3" fill="#22c55e" />
@@ -718,7 +718,7 @@ export default function AttendancePage() {
             </button>
             {showDatePicker && (
               <div className="absolute right-0 top-full mt-1 z-50 rounded-xl overflow-hidden shadow-2xl"
-                style={{ background: "#0d1020", border: `1px solid ${BORDER}`, minWidth: 240 }}>
+                style={{ background: "var(--bg-card)", border: `1px solid ${BORDER}`, minWidth: 240 }}>
                 <div className="px-3 py-2" style={{ borderBottom: `1px solid ${BORDER}` }}>
                   <p style={{ fontSize: 11, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>Select date</p>
                 </div>
@@ -736,7 +736,7 @@ export default function AttendancePage() {
                         className="w-full text-left px-3 py-2 rounded-lg text-xs transition-colors"
                         style={{ background: isSelected ? "rgba(99,102,241,0.15)" : "transparent",
                                  color: isSelected ? "#a5b4fc" : "#9ca3af" }}
-                        onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = "#1a1f35"; }}
+                        onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-hover)"; }}
                         onMouseLeave={(e) => { if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}>
                         <span className="font-medium">{opt.label}</span>
                         <span className="ml-2" style={{ color: "#4b5563" }}>
@@ -780,7 +780,7 @@ export default function AttendancePage() {
             </button>
             {showLiveMenu && (
               <div className="absolute right-0 top-full mt-1 z-50 rounded-xl overflow-hidden shadow-2xl"
-                style={{ background: "#0d1020", border: `1px solid ${BORDER}`, minWidth: 200 }}>
+                style={{ background: "var(--bg-card)", border: `1px solid ${BORDER}`, minWidth: 200 }}>
                 <div className="px-4 py-3 flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
@@ -844,7 +844,7 @@ export default function AttendancePage() {
                   </button>
                   {showMetricMenu && (
                     <div className="absolute right-0 top-full mt-1 z-50 rounded-xl overflow-hidden shadow-2xl"
-                      style={{ background: "#0d1020", border: `1px solid ${BORDER}`, minWidth: 160 }}>
+                      style={{ background: "var(--bg-card)", border: `1px solid ${BORDER}`, minWidth: 160 }}>
                       {(Object.entries(METRIC_LABELS) as [Metric, string][]).map(([key, label]) => (
                         <button key={key}
                           onClick={() => { setMetric(key); setShowMetricMenu(false); }}
@@ -854,7 +854,7 @@ export default function AttendancePage() {
                             color: metric === key ? "#a5b4fc" : "#9ca3af",
                             borderBottom: `1px solid ${BORDER}`,
                           }}
-                          onMouseEnter={(e) => { if (metric !== key) (e.currentTarget as HTMLButtonElement).style.background = "#1a1f35"; }}
+                          onMouseEnter={(e) => { if (metric !== key) (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-hover)"; }}
                           onMouseLeave={(e) => { if (metric !== key) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}>
                           {label}
                         </button>
@@ -941,18 +941,18 @@ export default function AttendancePage() {
                           {liveCams.map((_, i) => (
                             <button key={i} onClick={() => setCamIdx(i)}
                               className="w-2 h-2 rounded-full transition-colors"
-                              style={{ background: i === camIdx % liveCams.length ? "#6366f1" : "#1e2235" }} />
+                              style={{ background: i === camIdx % liveCams.length ? "#6366f1" : "var(--border-subtle)" }} />
                           ))}
                         </div>
                         <div className="flex gap-1">
                           <button onClick={() => setCamIdx((p) => (p - 1 + liveCams.length) % liveCams.length)}
                             className="w-6 h-6 rounded-lg flex items-center justify-center"
-                            style={{ background: "#1e2235" }}>
+                            style={{ background: "var(--border-subtle)" }}>
                             <ChevronLeft size={12} className="text-gray-400" />
                           </button>
                           <button onClick={() => setCamIdx((p) => (p + 1) % liveCams.length)}
                             className="w-6 h-6 rounded-lg flex items-center justify-center"
-                            style={{ background: "#1e2235" }}>
+                            style={{ background: "var(--border-subtle)" }}>
                             <ChevRight size={12} className="text-gray-400" />
                           </button>
                         </div>
@@ -961,7 +961,7 @@ export default function AttendancePage() {
                   </>
                 ) : (
                   <div className="flex items-center justify-center py-8 rounded-xl"
-                    style={{ background: "#0a0c18", fontSize: 12, color: "#4b5563" }}>
+                    style={{ background: "var(--bg-inset)", fontSize: 12, color: "#4b5563" }}>
                     No cameras registered
                   </div>
                 )}

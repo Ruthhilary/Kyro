@@ -15,9 +15,9 @@ import { Play, Square, Download, Radio, WifiOff, ChevronRight, Plus } from "luci
 import Link from "next/link";
 import type { SessionResponse, Camera } from "@/types";
 
-const BG     = "#0d0f1a";
-const CARD   = "#13152a";
-const BORDER = "#1e2235";
+const BG     = "var(--bg-base)";
+const CARD   = "var(--bg-card)";
+const BORDER = "var(--border-subtle)";
 
 const DEMO_SESSIONS_KEY = "kyro_demo_sessions";
 
@@ -161,7 +161,7 @@ function LiveCameraCard({
             onClick={() => onStart(camera)}
             disabled={starting === camera.camera_id || !isLive}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white disabled:opacity-50 shrink-0"
-            style={{ background: isLive ? "#4f46e5" : "#1f2937" }}
+            style={{ background: isLive ? "#4f46e5" : "var(--bg-hover)" }}
             title={!isLive ? "Camera not live — start a worker first" : undefined}>
             <Play size={13} />
             {starting === camera.camera_id ? "Starting…" : "Start session"}

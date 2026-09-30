@@ -5,8 +5,8 @@ import { createPortal } from "react-dom";
 import { CalendarClock } from "lucide-react";
 import { InlineCalendar } from "./DatePicker";
 
-const BG     = "#13152a";
-const BORDER = "#1e2235";
+const BG     = "var(--bg-card)";
+const BORDER = "var(--border-subtle)";
 
 interface Props {
   /** "YYYY-MM-DDTHH:MM" (seconds are ignored if present). */
@@ -113,7 +113,7 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick date & tim
       {open && typeof window !== "undefined" && createPortal(
         <div ref={panelRef}
           className="fixed z-[9999] rounded-2xl shadow-2xl overflow-hidden"
-          style={{ top: pos.top, left: pos.left, width: 272, background: "#0d0f1c", border: "1px solid #2d3148" }}>
+          style={{ top: pos.top, left: pos.left, width: 272, background: "var(--bg-base)", border: "1px solid var(--border-strong)" }}>
 
           <InlineCalendar
             value={datePart}
@@ -134,7 +134,7 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick date & tim
                 }}
                 placeholder="HH:MM"
                 className="flex-1 rounded-lg px-2 py-1 text-xs focus:outline-none"
-                style={{ background: "#141830", border: `1px solid ${BORDER}`, color: "#e5e7eb" }} />
+                style={{ background: "var(--border-subtle)", border: `1px solid ${BORDER}`, color: "#e5e7eb" }} />
             </div>
 
             <div className="flex flex-wrap gap-1 mt-2">
@@ -147,7 +147,7 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick date & tim
                   className="rounded-md px-1.5 py-0.5 transition-colors"
                   style={{
                     fontSize: 10,
-                    background: t === (timeDraft || timePart) ? "#6366f1" : "#1e2235",
+                    background: t === (timeDraft || timePart) ? "#6366f1" : "var(--border-subtle)",
                     color: t === (timeDraft || timePart) ? "#fff" : "#9ca3af",
                   }}>
                   {t}

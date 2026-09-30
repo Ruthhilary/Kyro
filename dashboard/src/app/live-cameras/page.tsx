@@ -28,9 +28,9 @@ import {
   Armchair, ChevronDown, ChevronUp, Minus, Plus,
 } from "lucide-react";
 
-const BG      = "#0d0f1a";
-const CARD_BG = "#13152a";
-const BORDER  = "#1e2235";
+const BG      = "var(--bg-base)";
+const CARD_BG = "var(--bg-card)";
+const BORDER  = "var(--border-subtle)";
 
 // Thresholds
 const WARN_PCT     = 80;  // amber warning
@@ -70,7 +70,7 @@ function SnapshotImage({ cameraId }: { cameraId: string }) {
 
   if (err) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center gap-2 cursor-pointer" style={{ background: "#0a0c18" }}
+      <div className="w-full h-full flex flex-col items-center justify-center gap-2 cursor-pointer" style={{ background: "var(--bg-inset)" }}
         onClick={() => { setErr(false); setRetryKey((k) => k + 1); }}>
         <Video size={28} className="text-gray-700" />
         <span className="text-xs text-gray-700">Stream lost — tap to retry</span>
@@ -245,9 +245,9 @@ function VenueOverview({
             <button
               onClick={() => setQueueSize(Math.max(0, queueSize - 10))}
               className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-              style={{ background: "#1f2937" }}
+              style={{ background: "var(--bg-hover)" }}
               onMouseEnter={(e) => (e.currentTarget.style.background = "#374151")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "#1f2937")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
             >
               <Minus size={12} className="text-gray-300" />
             </button>
@@ -255,9 +255,9 @@ function VenueOverview({
             <button
               onClick={() => setQueueSize(queueSize + 10)}
               className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-              style={{ background: "#1f2937" }}
+              style={{ background: "var(--bg-hover)" }}
               onMouseEnter={(e) => (e.currentTarget.style.background = "#374151")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "#1f2937")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
             >
               <Plus size={12} className="text-gray-300" />
             </button>
@@ -336,7 +336,7 @@ function RoomSeatTable({ zones }: { zones: ZoneLive[] }) {
         <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${BORDER}` }}>
           {/* Header */}
           <div className="flex text-xs font-medium text-gray-500 px-4 py-2.5"
-            style={{ borderBottom: `1px solid ${BORDER}`, background: "#0d0f1a" }}>
+            style={{ borderBottom: `1px solid ${BORDER}`, background: "var(--bg-base)" }}>
             <span className="flex-1 min-w-0">Room</span>
             <span className="w-20 text-right shrink-0">Capacity</span>
             <span className="w-20 text-right shrink-0">People in</span>
@@ -470,7 +470,7 @@ function CameraTile({
       <div className="rounded-2xl overflow-hidden flex flex-col"
         style={{ background: CARD_BG, border: `1px solid ${borderColor}` }}>
         {/* Snapshot */}
-        <div className="relative" style={{ aspectRatio: "16/9", background: "#0a0c18" }}>
+        <div className="relative" style={{ aspectRatio: "16/9", background: "var(--bg-inset)" }}>
           <SnapshotImage cameraId={camera.camera_id} />
           <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 rounded-full px-2.5 py-1"
             style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}>
@@ -536,7 +536,7 @@ function CameraTile({
       }}
     >
       {/* Snapshot area */}
-      <div className="relative" style={{ aspectRatio: "16/9", background: "#0a0c18" }}>
+      <div className="relative" style={{ aspectRatio: "16/9", background: "var(--bg-inset)" }}>
         <SnapshotImage cameraId={camera.camera_id} />
 
         {/* Alert overlay — shown when overcrowded */}

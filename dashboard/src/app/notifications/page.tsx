@@ -14,9 +14,9 @@ import {
 function isLiveMode(): boolean { if (typeof window === "undefined") return false; return localStorage.getItem("kyro_mode") === "live"; }
 const inDemoMode = () => typeof window !== "undefined" && localStorage.getItem("kyro_mode") === "demo";
 
-const BG      = "#0d0f1a";
-const CARD_BG = "#13152a";
-const BORDER  = "#1e2235";
+const BG      = "var(--bg-base)";
+const CARD_BG = "var(--bg-card)";
+const BORDER  = "var(--border-subtle)";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 const STORAGE_KEY = "kyro_notif_prefs";
@@ -52,7 +52,7 @@ function ThresholdSlider({ label, value, onChange, color }: {
         value={Math.round(value * 100)}
         onChange={(e) => onChange(parseInt(e.target.value) / 100)}
         className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
-        style={{ accentColor: color, background: "#1f2937" }}
+        style={{ accentColor: color, background: "var(--bg-hover)" }}
       />
       <div className="flex justify-between text-xs text-gray-700">
         <span>50%</span><span>75%</span><span>100%</span>

@@ -16,20 +16,20 @@ import type { Camera, SeatState } from "@/types";
 import type { SeatAction } from "@/components/ui/SeatMap";
 import { SeatMap } from "@/components/ui/SeatMap";
 
-const BG     = "#060810";
-const CARD   = "#0c0e1a";
-const CARD2  = "#0f1120";
-const BORDER = "#141830";
+const BG     = "var(--bg-inset)";
+const CARD   = "var(--bg-card)";
+const CARD2  = "var(--bg-card)";
+const BORDER = "var(--border-subtle)";
 const GREEN  = "#00ff88";
 
 const DOT_COLOURS: Record<string, string> = {
   occupied:           "#ff4d6d",  // red
   temporarily_vacant: "#ffd60a",  // yellow
-  likely_available:   "#1e2235",  // dark (empty)
-  available:          "#1e2235",  // dark (empty)
+  likely_available:   "var(--border-subtle)",  // dark (empty)
+  available:          "var(--border-subtle)",  // dark (empty)
   reserved:           "#9b5de5",  // purple
   rota_hold:          "#9b5de5",  // purple — same as reserved (held seat)
-  unknown:            "#1a1f35",  // very dark
+  unknown:            "var(--border-subtle)",  // very dark
 };
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ function DotSeatMap({ seats, onSelect, selectedId, zoom }: {
       {/* Stage label */}
       <div className="flex justify-center mb-3">
         <div className="px-16 py-1.5 rounded-lg text-center"
-          style={{ background: "#0f1120", border: "1px solid #1a1f35" }}>
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
           <span style={{ fontSize: 9, color: "#374151", letterSpacing: "0.2em", textTransform: "uppercase" }}>Stage</span>
         </div>
       </div>
@@ -92,7 +92,7 @@ function DotSeatMap({ seats, onSelect, selectedId, zoom }: {
       <div className="flex flex-col items-center" style={{ gap }}>
         {rowKeys.map((row) => (
           <div key={row} className="flex items-center" style={{ gap }}>
-            <span style={{ fontSize: 9, color: "#1e2235", width: 12, textAlign: "right", marginRight: 4, fontFamily: "monospace" }}>{row}</span>
+            <span style={{ fontSize: 9, color: "var(--border-subtle)", width: 12, textAlign: "right", marginRight: 4, fontFamily: "monospace" }}>{row}</span>
             {rows[row].sort((a, b) => a.number - b.number).map((seat) => (
               <button key={seat.seat_id}
                 onClick={() => onSelect(seat)}
@@ -100,7 +100,7 @@ function DotSeatMap({ seats, onSelect, selectedId, zoom }: {
                 style={{
                   width: dotSize, height: dotSize,
                   borderRadius: "50%",
-                  background: DOT_COLOURS[seat.state] ?? "#1e2235",
+                  background: DOT_COLOURS[seat.state] ?? "var(--border-subtle)",
                   border: selectedId === seat.seat_id ? `2px solid ${GREEN}` : "none",
                   cursor: "pointer",
                   transition: "transform 0.1s",
@@ -270,7 +270,7 @@ function UnitBreakdown({ seats, camera }: { seats: SeatState[]; camera: Camera }
                 <span style={{ fontSize: 11, fontWeight: 700, color: t.colour }}>{t.pct}%</span>
               </div>
             </div>
-            <div style={{ height: 4, background: "#141830", borderRadius: 2, overflow: "hidden" }}>
+            <div style={{ height: 4, background: "var(--border-subtle)", borderRadius: 2, overflow: "hidden" }}>
               <div style={{ width: `${t.pct}%`, height: "100%", background: t.colour, borderRadius: 2, transition: "width 0.7s" }} />
             </div>
           </div>
@@ -279,7 +279,7 @@ function UnitBreakdown({ seats, camera }: { seats: SeatState[]; camera: Camera }
       <div className="px-4 pb-4">
         <button onClick={downloadManifest}
           className="w-full py-2.5 rounded-lg text-xs font-bold tracking-widest uppercase transition-colors hover:opacity-80"
-          style={{ background: "#141830", color: "#9ca3af", border: `1px solid ${BORDER}`, letterSpacing: "0.1em" }}>
+          style={{ background: "var(--border-subtle)", color: "#9ca3af", border: `1px solid ${BORDER}`, letterSpacing: "0.1em" }}>
           Download Manifest
         </button>
       </div>
@@ -317,12 +317,12 @@ function SeatDetailPanel({ seat, cameraId, onAction, onClose }: {
 
       {/* Camera feed — compact height */}
       <div className="mx-3 mt-3 rounded-lg overflow-hidden relative shrink-0"
-        style={{ height: 100, background: "#060810", border: `1px solid ${BORDER}` }}>
+        style={{ height: 100, background: "var(--bg-inset)", border: `1px solid ${BORDER}` }}>
         {inDemoMode() ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-1"
-            style={{ background: "linear-gradient(135deg,#0f1120,#060810)" }}>
-            <CameraIcon size={18} style={{ color: "#1e2235" }} />
-            <p style={{ fontSize: 9, color: "#1e2235" }}>Live feed — live mode</p>
+            style={{ background: "linear-gradient(135deg,var(--bg-card),var(--bg-inset))" }}>
+            <CameraIcon size={18} style={{ color: "var(--border-subtle)" }} />
+            <p style={{ fontSize: 9, color: "var(--border-subtle)" }}>Live feed — live mode</p>
           </div>
         ) : snapshotSrc ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -342,7 +342,7 @@ function SeatDetailPanel({ seat, cameraId, onAction, onClose }: {
       </div>
 
       <div className="px-4 py-3 flex flex-col gap-2 overflow-y-auto" style={{ flex: 1 }}>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "#060810" }}>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "var(--bg-inset)" }}>
           <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: DOT_COLOURS[seat.state] ?? "#374151" }} />
           <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>
             {seat.state.replace("_", " ")}
@@ -356,13 +356,13 @@ function SeatDetailPanel({ seat, cameraId, onAction, onClose }: {
             <input autoFocus type="text" placeholder="Reserved for (optional)" value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { onAction({ seatId: seat.seat_id, action: "reserve", reservedFor: name.trim() || undefined }); } if (e.key === "Escape") setReserving(false); }}
-              style={{ background: "#060810", border: `1px solid ${GREEN}40`, color: "#e5e7eb", fontSize: 11, padding: "6px 10px", borderRadius: 6, width: "100%", outline: "none" }} />
+              style={{ background: "var(--bg-inset)", border: `1px solid ${GREEN}40`, color: "#e5e7eb", fontSize: 11, padding: "6px 10px", borderRadius: 6, width: "100%", outline: "none" }} />
             <div className="flex gap-2">
               <button onClick={() => onAction({ seatId: seat.seat_id, action: "reserve", reservedFor: name.trim() || undefined })}
                 className="flex-1 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider"
                 style={{ background: "#9b5de5", color: "#fff" }}>Confirm</button>
               <button onClick={() => setReserving(false)}
-                style={{ background: "#141830", color: "#6b7280", fontSize: 11, padding: "6px 10px", borderRadius: 6 }}>Cancel</button>
+                style={{ background: "var(--border-subtle)", color: "#6b7280", fontSize: 11, padding: "6px 10px", borderRadius: 6 }}>Cancel</button>
             </div>
           </>
         ) : (
@@ -391,11 +391,11 @@ function SeatDetailPanel({ seat, cameraId, onAction, onClose }: {
               <>
                 <p style={{ fontSize: 10, color: "#9b5de5" }}>{seat.reserved_for ? `Reserved: ${seat.reserved_for}` : "Reserved (no name)"}</p>
                 <button onClick={() => setReserving(true)}
-                  style={{ background: "#141830", color: "#9b5de5", fontSize: 11, padding: "6px", borderRadius: 6, width: "100%", border: "1px solid #9b5de540" }}>
+                  style={{ background: "var(--border-subtle)", color: "#9b5de5", fontSize: 11, padding: "6px", borderRadius: 6, width: "100%", border: "1px solid #9b5de540" }}>
                   Edit
                 </button>
                 <button onClick={() => onAction({ seatId: seat.seat_id, action: "unreserve" })}
-                  style={{ background: "#141830", color: "#ff4d6d", fontSize: 11, padding: "6px", borderRadius: 6, width: "100%", border: "1px solid #ff4d6d20" }}>
+                  style={{ background: "var(--border-subtle)", color: "#ff4d6d", fontSize: 11, padding: "6px", borderRadius: 6, width: "100%", border: "1px solid #ff4d6d20" }}>
                   Remove Reservation
                 </button>
               </>
@@ -422,7 +422,7 @@ function ResetDialog({ onConfirm, onCancel }: { onConfirm: () => void; onCancel:
           <button onClick={onConfirm} className="flex-1 py-2 rounded-lg text-xs font-bold uppercase"
             style={{ background: "#ff4d6d22", color: "#ff4d6d", border: "1px solid #ff4d6d40" }}>Reset</button>
           <button onClick={onCancel} className="flex-1 py-2 rounded-lg text-xs"
-            style={{ background: "#141830", color: "#6b7280" }}>Cancel</button>
+            style={{ background: "var(--border-subtle)", color: "#6b7280" }}>Cancel</button>
         </div>
       </div>
     </div>
@@ -448,7 +448,7 @@ function ResetDialog({ onConfirm, onCancel }: { onConfirm: () => void; onCancel:
         <p style={{ fontSize: 13, fontWeight: 700, color: "#e5e7eb", marginBottom: 8 }}>Reset All Units</p>
         <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
-          style={{ background: "#060810", border: `1px solid ${BORDER}`, color: "#e5e7eb", fontSize: 11, padding: "8px 10px", borderRadius: 6, width: "100%", marginBottom: 8, outline: "none" }} />
+          style={{ background: "var(--bg-inset)", border: `1px solid ${BORDER}`, color: "#e5e7eb", fontSize: 11, padding: "8px 10px", borderRadius: 6, width: "100%", marginBottom: 8, outline: "none" }} />
         {error && <p style={{ fontSize: 10, color: "#ff4d6d", marginBottom: 8 }}>{error}</p>}
         <div className="flex gap-2">
           <button onClick={submit} disabled={busy} className="flex-1 py-2 rounded-lg text-xs font-bold uppercase"
@@ -456,7 +456,7 @@ function ResetDialog({ onConfirm, onCancel }: { onConfirm: () => void; onCancel:
             {busy ? "…" : "Reset"}
           </button>
           <button onClick={onCancel} className="flex-1 py-2 rounded-lg text-xs"
-            style={{ background: "#141830", color: "#6b7280" }}>Cancel</button>
+            style={{ background: "var(--border-subtle)", color: "#6b7280" }}>Cancel</button>
         </div>
       </div>
     </div>
@@ -628,11 +628,11 @@ function CameraSeatView({ camera }: { camera: Camera }) {
             <div className="flex items-center gap-2 shrink-0">
               <button onClick={() => setZoom(z => Math.max(0.5, z - 0.25))}
                 className="w-6 h-6 rounded flex items-center justify-center text-sm font-bold"
-                style={{ background: "#141830", color: "#6b7280" }}>−</button>
+                style={{ background: "var(--border-subtle)", color: "#6b7280" }}>−</button>
               <span style={{ fontSize: 10, color: "#4b5563", fontFamily: "monospace", minWidth: 32, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
               <button onClick={() => setZoom(z => Math.min(2, z + 0.25))}
                 className="w-6 h-6 rounded flex items-center justify-center text-sm font-bold"
-                style={{ background: "#141830", color: "#6b7280" }}>+</button>
+                style={{ background: "var(--border-subtle)", color: "#6b7280" }}>+</button>
             </div>
           </div>
 
@@ -640,7 +640,7 @@ function CameraSeatView({ camera }: { camera: Camera }) {
           <div className="relative p-6" style={{ minHeight: 320 }}>
             {/* Scanning badge */}
             <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-lg z-10"
-              style={{ background: "#060810", border: `1px solid ${GREEN}30` }}>
+              style={{ background: "var(--bg-inset)", border: `1px solid ${GREEN}30` }}>
               <span style={{ fontSize: 9, color: GREEN, fontFamily: "monospace", letterSpacing: "0.1em" }}>SCANNING</span>
               <div className="flex gap-0.5">
                 {[1,2,3,4].map((i) => (

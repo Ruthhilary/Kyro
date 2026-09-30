@@ -14,9 +14,9 @@ import { TrendingUp, Users, Calendar, BarChart2, Search, X, ArrowUp, ArrowDown, 
 import { DatePicker } from "@/components/ui/DatePicker";
 import type { AttendancePoint, AnalyticsSummary, HourlyBucket } from "@/types";
 
-const BG      = "#0d0f1a";
-const CARD_BG = "#13152a";
-const BORDER  = "#1e2235";
+const BG      = "var(--bg-base)";
+const CARD_BG = "var(--bg-card)";
+const BORDER  = "var(--border-subtle)";
 const DEFAULT_CAMERA = process.env.NEXT_PUBLIC_CAMERA_ID ?? "cam-01";
 
 // Safely parse a date from ISO string using UTC
@@ -32,7 +32,7 @@ function Stat({ label, value, sub, icon: Icon, accent }: {
     <div className="rounded-2xl p-5 flex flex-col gap-3" style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}>
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium" style={{ color: "#6b7280" }}>{label}</span>
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: accent ? `${accent}18` : "#1e2235" }}>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: accent ? `${accent}18` : "var(--border-subtle)" }}>
           <Icon size={15} style={{ color: accent ?? "#6b7280" }} />
         </div>
       </div>
@@ -67,7 +67,7 @@ function DayDetail({ point, allData, onClose }: { point: AttendancePoint; allDat
         <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={16} /></button>
       </div>
       <div className="p-5 grid grid-cols-3 gap-4">
-        <div className="rounded-xl p-4 flex flex-col gap-1 min-w-0" style={{ background: "#0d0f1c", border: `1px solid ${BORDER}` }}>
+        <div className="rounded-xl p-4 flex flex-col gap-1 min-w-0" style={{ background: "var(--bg-base)", border: `1px solid ${BORDER}` }}>
           <p className="text-xs whitespace-nowrap" style={{ color: "#6b7280" }}>Attendance</p>
           <p className="text-2xl font-bold text-white tabular-nums">{point.attendance.toLocaleString()}</p>
           <div className="flex items-center gap-1 text-xs flex-wrap">
@@ -76,12 +76,12 @@ function DayDetail({ point, allData, onClose }: { point: AttendancePoint; allDat
               : <><Minus size={10} style={{ color:"#6b7280" }}/><span style={{ color:"#6b7280" }}>At average</span></>}
           </div>
         </div>
-        <div className="rounded-xl p-4 flex flex-col gap-1 min-w-0" style={{ background: "#0d0f1c", border: `1px solid ${BORDER}` }}>
+        <div className="rounded-xl p-4 flex flex-col gap-1 min-w-0" style={{ background: "var(--bg-base)", border: `1px solid ${BORDER}` }}>
           <p className="text-xs whitespace-nowrap" style={{ color: "#6b7280" }}>Occupancy</p>
           <p className="text-2xl font-bold tabular-nums" style={{ color: "#818cf8" }}>{point.occupancy_pct.toFixed(1)}%</p>
           <p className="text-xs whitespace-nowrap" style={{ color: "#4b5563" }}>Of seat capacity</p>
         </div>
-        <div className="rounded-xl p-4 flex flex-col gap-1 min-w-0" style={{ background: "#0d0f1c", border: `1px solid ${BORDER}` }}>
+        <div className="rounded-xl p-4 flex flex-col gap-1 min-w-0" style={{ background: "var(--bg-base)", border: `1px solid ${BORDER}` }}>
           <p className="text-xs whitespace-nowrap" style={{ color: "#6b7280" }}>vs last {dayName}</p>
           {prevDiff !== null ? (
             <>
@@ -101,7 +101,7 @@ function DayDetail({ point, allData, onClose }: { point: AttendancePoint; allDat
             {diffPct > 0 ? "+" : ""}{diffPct}%
           </span>
         </div>
-        <div className="rounded-full overflow-hidden" style={{ height: 6, background: "#1e2235" }}>
+        <div className="rounded-full overflow-hidden" style={{ height: 6, background: "var(--border-subtle)" }}>
           <div className="h-full rounded-full"
             style={{ width: `${Math.min(100,(point.attendance/(avg*1.5))*100)}%`,
                      background: diffPct > 10 ? "#4ade80" : diffPct < -10 ? "#f87171" : "#818cf8" }} />
@@ -137,7 +137,7 @@ function TrendChart({ data }: { data: AttendancePoint[] }) {
           <stop offset="0%" stopColor="#6366f1" stopOpacity="0.3"/>
           <stop offset="100%" stopColor="#6366f1" stopOpacity="0"/>
         </linearGradient></defs>
-        {[0,0.25,0.5,0.75,1].map((t) => <line key={t} x1="0" y1={H-t*(H-20)-10} x2="100" y2={H-t*(H-20)-10} stroke="#1e2235" strokeWidth="0.5"/>)}
+        {[0,0.25,0.5,0.75,1].map((t) => <line key={t} x1="0" y1={H-t*(H-20)-10} x2="100" y2={H-t*(H-20)-10} stroke="var(--border-subtle)" strokeWidth="0.5"/>)}
         <polygon points={`0,${H} ${pts} 100,${H}`} fill="url(#ag)"/>
         <polyline points={pts} fill="none" stroke="#6366f1" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
       </svg>
@@ -169,7 +169,7 @@ function ArrivalChart({ data }: { data: HourlyBucket[] }) {
           const h = Math.max((b.count/max)*100, b.count > 0 ? 4 : 0);
           return (
             <div key={b.hour} className="flex-1 h-full flex flex-col items-center justify-end" title={`${b.hour}:00 — ${b.count} arrivals`}>
-              <div className="w-full rounded-sm" style={{ height:`${h}%`, background: b.count===max?"#818cf8":b.count>max*0.2?"#4338ca":"#1e2235" }}/>
+              <div className="w-full rounded-sm" style={{ height:`${h}%`, background: b.count===max?"#818cf8":b.count>max*0.2?"#4338ca":"var(--border-subtle)" }}/>
             </div>
           );
         })}
@@ -198,8 +198,8 @@ function WeeklyBreakdown({ data }: { data: AttendancePoint[] }) {
           return (
             <div key={day} className="flex items-center gap-3">
               <span className="text-xs w-7 shrink-0" style={{ color:"#6b7280" }}>{day}</span>
-              <div className="flex-1 rounded-full overflow-hidden" style={{ height:6, background:"#1e2235" }}>
-                <div className="h-full rounded-full" style={{ width:`${pct}%`, background:pct>80?"#818cf8":pct>40?"#4f46e5":"#2d3148" }}/>
+              <div className="flex-1 rounded-full overflow-hidden" style={{ height:6, background:"var(--border-subtle)" }}>
+                <div className="h-full rounded-full" style={{ width:`${pct}%`, background:pct>80?"#818cf8":pct>40?"#4f46e5":"var(--border-strong)" }}/>
               </div>
               <span className="text-xs tabular-nums w-8 text-right" style={{ color:avgs[i]>0?"#9ca3af":"#374151" }}>
                 {avgs[i]>0?avgs[i]:"—"}
@@ -240,7 +240,7 @@ function RecentSessions({ data, onSelect, selectedTs }: {
               <tr key={i} onClick={() => onSelect(d)}
                 style={{ borderBottom: i<recent.length-1?`1px solid ${BORDER}`:"none",
                          background: sel?"rgba(99,102,241,0.1)":"transparent", cursor:"pointer" }}
-                onMouseEnter={(e)=>{ if(!sel)(e.currentTarget as HTMLElement).style.background="#1e2235"; }}
+                onMouseEnter={(e)=>{ if(!sel)(e.currentTarget as HTMLElement).style.background="var(--border-subtle)"; }}
                 onMouseLeave={(e)=>{ (e.currentTarget as HTMLElement).style.background=sel?"rgba(99,102,241,0.1)":"transparent"; }}>
                 <td className="px-5 py-3 font-medium" style={{ color:sel?"#818cf8":"#e5e7eb" }}>{day}/{mon}/{yr}</td>
                 <td className="px-5 py-3" style={{ color:"#6b7280" }}>{DAYS_LONG[dow]}</td>
@@ -340,7 +340,7 @@ export default function AnalyticsPage() {
             <h1 className="text-lg font-bold text-white">Analytics</h1>
             <p className="text-xs mt-0.5" style={{ color:"#6b7280" }}>
               Attendance trends and seat utilisation
-              {inDemoMode() && <span className="ml-2 px-1.5 py-0.5 rounded text-[10px]" style={{ background:"#1e2235", color:"#6366f1" }}>Live · updates every 5s</span>}
+              {inDemoMode() && <span className="ml-2 px-1.5 py-0.5 rounded text-[10px]" style={{ background:"var(--border-subtle)", color:"#6366f1" }}>Live · updates every 5s</span>}
             </p>
           </div>
           <CameraSwitcher activeCameraId={cameraId} onChange={setCameraId} />
@@ -349,7 +349,7 @@ export default function AnalyticsPage() {
         {/* Search bar */}
         <form onSubmit={(e)=>{ e.preventDefault(); applyFilter(history,search,fromDate,toDate); }}
           className="px-6 py-3 flex flex-wrap items-center gap-3"
-          style={{ borderBottom:`1px solid ${BORDER}`, background:"#0d0f1c" }}>
+          style={{ borderBottom:`1px solid ${BORDER}`, background:"var(--bg-base)" }}>
           <div className="flex items-center gap-2 flex-1 min-w-48 rounded-lg px-3 py-2" style={{ background:CARD_BG, border:`1px solid ${BORDER}` }}>
             <Search size={13} style={{ color:"#6b7280" }}/>
             <input type="text" placeholder="Search by day name (e.g. Sunday) or year…"
@@ -369,7 +369,7 @@ export default function AnalyticsPage() {
           </button>
           {(search||fromDate||toDate) && (
             <button type="button" onClick={()=>{ setSearch(""); setFromDate(""); setToDate(""); }}
-              className="text-xs px-3 py-2 rounded-lg" style={{ background:"#1e2235", color:"#9ca3af" }}>Clear</button>
+              className="text-xs px-3 py-2 rounded-lg" style={{ background:"var(--border-subtle)", color:"#9ca3af" }}>Clear</button>
           )}
           {filtered.length !== history.length && (
             <span className="text-xs" style={{ color:"#6366f1" }}>Showing {filtered.length} of {history.length} days</span>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { MapPin, ChevronDown, ChevronUp, Check } from "lucide-react";
 import type { SectionInfo } from "@/lib/rotaParser";
 
-const BORDER = "#1e2235";
+const BORDER = "var(--border-subtle)";
 
 export interface SeatingAnswer {
   section: string | null;
@@ -99,7 +99,7 @@ export function SeatingAreaPicker({ label, sections, value, resolved, onChange, 
       )}
 
       {showChart && sections.length > 0 && (
-        <div className="rounded-lg p-3 flex flex-col gap-2" style={{ background: "#0a0c18", border: `1px solid ${BORDER}` }}>
+        <div className="rounded-lg p-3 flex flex-col gap-2" style={{ background: "var(--bg-inset)", border: `1px solid ${BORDER}` }}>
           <p className="text-xs text-gray-600 mb-1">Tap the rows this group sits in</p>
           {sections.map((s) => (
             <div key={s.section} className="flex items-center gap-1.5 flex-wrap">
@@ -112,7 +112,7 @@ export function SeatingAreaPicker({ label, sections, value, resolved, onChange, 
                     onClick={() => toggleRow(s.section, r)}
                     className="w-7 h-7 rounded text-xs font-medium transition-colors shrink-0"
                     style={{
-                      background: active ? "#4f46e5" : "#141830",
+                      background: active ? "#4f46e5" : "var(--border-subtle)",
                       color: active ? "#fff" : "#9ca3af",
                       border: `1px solid ${active ? "#6366f1" : BORDER}`,
                     }}

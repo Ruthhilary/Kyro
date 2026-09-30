@@ -11,7 +11,7 @@ const COLOURS: Record<string, string> = {
   available:          "#374151",
   reserved:           "#7c3aed",
   rota_hold:          "#2563eb",
-  unknown:            "#1f2937",
+  unknown:            "var(--bg-hover)",
 };
 
 const LABELS: Record<string, string> = {
@@ -45,7 +45,7 @@ interface SeatMapProps {
 
 function Legend({ hint }: { hint?: string }) {
   return (
-    <div style={{ borderTop: "1px solid #1e2235", background: "#0d0f1c" }}>
+    <div style={{ borderTop: "1px solid var(--border-subtle)", background: "var(--bg-base)" }}>
       <div className="flex flex-wrap gap-x-5 gap-y-2 px-4 py-3">
         {(["occupied","temporarily_vacant","available","reserved","rota_hold"] as const).map((s) => (
           <div key={s} className="flex items-center gap-1.5 shrink-0">
@@ -90,13 +90,13 @@ function ActionMenu({ seat, x, y, onAction, onClose }: {
 
   return createPortal(
     <div ref={ref} className="fixed z-[9999] rounded-xl shadow-2xl text-xs"
-      style={{ left: pos.x, top: pos.y, background: "#1a1c2e", border: "1px solid #2d3148", minWidth: 190 }}
+      style={{ left: pos.x, top: pos.y, background: "var(--bg-hover)", border: "1px solid var(--border-strong)", minWidth: 190 }}
       onMouseDown={(e) => e.stopPropagation()}>
-      <div className="px-3 py-2.5 border-b" style={{ borderColor: "#2d3148" }}>
+      <div className="px-3 py-2.5 border-b" style={{ borderColor: "var(--border-strong)" }}>
         <span className="font-semibold text-white">Seat {seat.seat_id}</span>
         <span className="ml-2 text-gray-500">Row {seat.row} · #{seat.number}</span>
       </div>
-      <div className="px-3 py-2 flex items-center gap-2" style={{ borderBottom: "1px solid #2d3148" }}>
+      <div className="px-3 py-2 flex items-center gap-2" style={{ borderBottom: "1px solid var(--border-strong)" }}>
         <span className="w-2.5 h-2.5 rounded-sm" style={{ background: COLOURS[seat.state] ?? "#374151" }} />
         <span className="text-gray-400">{LABELS[seat.state] ?? seat.state}</span>
       </div>
@@ -105,7 +105,7 @@ function ActionMenu({ seat, x, y, onAction, onClose }: {
           <input autoFocus type="text" placeholder="Reserved for (optional)"
             value={name} onChange={(e) => setName(e.target.value)}
             className="w-full rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
-            style={{ background: "#0d0f1a", border: "1px solid #374151" }}
+            style={{ background: "var(--bg-base)", border: "1px solid #374151" }}
             onKeyDown={(e) => {
               if (e.key === "Enter") onAction({ seatId: seat.seat_id, action: "reserve", reservedFor: name || undefined });
               if (e.key === "Escape") { setReserving(false); setName(""); }
@@ -114,7 +114,7 @@ function ActionMenu({ seat, x, y, onAction, onClose }: {
             <button onClick={() => onAction({ seatId: seat.seat_id, action: "reserve", reservedFor: name || undefined })}
               className="flex-1 py-1.5 rounded-lg text-white font-medium" style={{ background: "#7c3aed" }}>Confirm</button>
             <button onClick={() => { setReserving(false); setName(""); }}
-              className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white" style={{ background: "#2d3148" }}>Cancel</button>
+              className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white" style={{ background: "var(--border-strong)" }}>Cancel</button>
           </div>
         </div>
       ) : (
@@ -203,7 +203,7 @@ function CanvasSeatMap({ seats, interactive, onSeatAction, externalOverrides, on
     if (!W || !H) return;
     canvas.width = W * dpr; canvas.height = H * dpr;
     ctx.scale(dpr, dpr);
-    ctx.fillStyle = "#0a0c18";
+    ctx.fillStyle = "var(--bg-inset)";
     ctx.fillRect(0, 0, W, H);
     const sc = scaleRef.current, ox = offsetRef.current.x, oy = offsetRef.current.y;
 
@@ -244,7 +244,7 @@ function CanvasSeatMap({ seats, interactive, onSeatAction, externalOverrides, on
         const ov     = externalOverrides?.[seat.seat_id];
         const state  = (ov?.state ?? seat.state) as string;
         ctx.globalAlpha = state === "available" ? 0.4 : 0.88;
-        ctx.fillStyle   = COLOURS[state] ?? "#1f2937";
+        ctx.fillStyle   = COLOURS[state] ?? "var(--bg-hover)";
         ctx.beginPath(); ctx.roundRect(x, y, SW, SH, 2); ctx.fill();
         ctx.globalAlpha = 1;
         if (selectedSeatId === seat.seat_id) {
@@ -331,20 +331,20 @@ function CanvasSeatMap({ seats, interactive, onSeatAction, externalOverrides, on
   }, [interactive, rows, maxCols, SW, SH, GX, GY, PAD, LW, externalOverrides, onSeatSelect]);
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: "#0a0c18", border: "1px solid #1e2235" }}>
-      <div className="flex items-center gap-3 px-4 py-2" style={{ borderBottom: "1px solid #1e2235", background: "#0d0f1c" }}>
+    <div className="rounded-xl overflow-hidden" style={{ background: "var(--bg-inset)", border: "1px solid var(--border-subtle)" }}>
+      <div className="flex items-center gap-3 px-4 py-2" style={{ borderBottom: "1px solid var(--border-subtle)", background: "var(--bg-base)" }}>
         <span className="text-xs font-medium" style={{ color: "#6b7280" }}>{seats.length.toLocaleString()} seats</span>
         <div className="ml-auto flex items-center gap-1.5">
           <button onClick={() => { const p = pivot(); applyZoom(1.25, p.x, p.y); }}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold text-gray-300 hover:text-white"
-            style={{ background: "#1e2235" }}>+</button>
+            style={{ background: "var(--border-subtle)" }}>+</button>
           <span className="text-xs tabular-nums text-center" style={{ color: "#9ca3af", minWidth: 40 }}>{Math.round(zoom * 100)}%</span>
           <button onClick={() => { const p = pivot(); applyZoom(0.8, p.x, p.y); }}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold text-gray-300 hover:text-white"
-            style={{ background: "#1e2235" }}>−</button>
+            style={{ background: "var(--border-subtle)" }}>−</button>
           <button onClick={fitView}
             className="px-3 h-7 rounded-lg text-xs font-medium text-gray-300 hover:text-white ml-1"
-            style={{ background: "#1e2235" }}>Fit all</button>
+            style={{ background: "var(--border-subtle)" }}>Fit all</button>
         </div>
       </div>
       <div ref={containerRef} style={{ height: 380, position: "relative" }}>
@@ -353,7 +353,7 @@ function CanvasSeatMap({ seats, interactive, onSeatAction, externalOverrides, on
           onMouseUp={onMouseUp} onMouseLeave={onMouseUp} onClick={onClick} />
         {zoom < 0.3 && (
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs px-3 py-1.5 rounded-full pointer-events-none"
-            style={{ background: "rgba(30,34,53,0.9)", color: "#9ca3af", border: "1px solid #2d3148" }}>
+            style={{ background: "rgba(30,34,53,0.9)", color: "#9ca3af", border: "1px solid var(--border-strong)" }}>
             Scroll to zoom · Drag to pan
           </div>
         )}
@@ -405,11 +405,11 @@ function SvgSeatMap({ seats: rawSeats, onSeatAction, interactive = true, externa
   }, [externalOverrides, onSeatAction]);
 
   return (
-    <div className="rounded-xl select-none" style={{ background: "#0a0c18", border: "1px solid #1e2235" }}
+    <div className="rounded-xl select-none" style={{ background: "var(--bg-inset)", border: "1px solid var(--border-subtle)" }}
       onClick={() => { setSelected(null); setMenuPos(null); }}>
       <svg viewBox={`0 0 ${totalW} ${totalH}`} className="w-full h-auto" style={{ maxHeight: 340 }}>
         <rect x={PAD + LW} y={PAD} width={maxSeats * (SW + SG) - SG} height={STH}
-          rx={6} fill="#1a1c2e" stroke="#2d3148" strokeWidth={1} />
+          rx={6} fill="var(--bg-hover)" stroke="var(--border-strong)" strokeWidth={1} />
         <text x={PAD + LW + (maxSeats * (SW + SG) - SG) / 2} y={PAD + STH / 2 + 4}
           textAnchor="middle" fontSize={10} fill="#4b5563" fontFamily="Inter,sans-serif" letterSpacing="3" fontWeight="600">
           STAGE
@@ -442,7 +442,7 @@ function SvgSeatMap({ seats: rawSeats, onSeatAction, interactive = true, externa
                       setMenuPos({ x: Math.min(vx, window.innerWidth - 210), y: vy + 4 });
                     }}>
                     <rect x={x} y={rowY} width={SW} height={SH} rx={4}
-                      fill={COLOURS[seat.state] ?? "#1f2937"}
+                      fill={COLOURS[seat.state] ?? "var(--bg-hover)"}
                       fillOpacity={seat.state === "available" ? 0.55 : 0.85}
                       stroke={selected?.seat_id === seat.seat_id ? "#fff" : "transparent"} strokeWidth={1.5} />
                     {seat.state === "reserved" && (

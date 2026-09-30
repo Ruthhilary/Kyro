@@ -146,7 +146,7 @@ export default function LoginPage() {
   if (screen === "landing") {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center p-6"
-        style={{ background: "linear-gradient(160deg, #070910 0%, #0d0f1a 50%, #070910 100%)" }}>
+        style={{ background: "linear-gradient(160deg, var(--grad-login-a) 0%, var(--bg-base) 50%, var(--grad-login-a) 100%)" }}>
 
         {/* Logo */}
         <div className="mb-10 flex flex-col items-center gap-3">
@@ -166,7 +166,7 @@ export default function LoginPage() {
           {/* Demo mode */}
           <button onClick={() => { setDemoMode(); setScreen("demo"); }}
             className="w-full rounded-2xl p-5 text-left transition-all hover:scale-[1.01] active:scale-[0.99]"
-            style={{ background: "#13152a", border: "1px solid rgba(99,102,241,0.4)" }}>
+            style={{ background: "var(--bg-card)", border: "1px solid rgba(99,102,241,0.4)" }}>
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                 style={{ background: "rgba(99,102,241,0.15)" }}>
@@ -192,7 +192,7 @@ export default function LoginPage() {
           {/* Live mode */}
           <button onClick={() => { setLiveMode(); setScreen("live"); }}
             className="w-full rounded-2xl p-5 text-left transition-all hover:scale-[1.01] active:scale-[0.99]"
-            style={{ background: "#13152a", border: "1px solid rgba(34,197,94,0.3)" }}>
+            style={{ background: "var(--bg-card)", border: "1px solid rgba(34,197,94,0.3)" }}>
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                 style={{ background: "rgba(34,197,94,0.12)" }}>
@@ -227,7 +227,7 @@ export default function LoginPage() {
   if (screen === "demo") {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center p-6"
-        style={{ background: "linear-gradient(160deg, #070910 0%, #0d0f1a 50%, #070910 100%)" }}>
+        style={{ background: "linear-gradient(160deg, var(--grad-login-a) 0%, var(--bg-base) 50%, var(--grad-login-a) 100%)" }}>
 
         <div className="w-full max-w-md">
           <button onClick={() => setScreen("landing")}
@@ -258,7 +258,7 @@ export default function LoginPage() {
                 <button key={a.username}
                   onClick={() => handleDemoLogin(a.username, a.password)}
                   className="w-full rounded-2xl p-4 text-left transition-all hover:scale-[1.01] active:scale-[0.99]"
-                  style={{ background: "#13152a", border: "1px solid #1e2235" }}>
+                  style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
                       style={{ background: a.role === "admin" ? "#4f46e5" : a.role === "operator" ? "#0369a1" : "#374151" }}>
@@ -297,7 +297,7 @@ export default function LoginPage() {
   // ── Live mode — sign in form ───────────────────────────────────────────────
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6"
-      style={{ background: "linear-gradient(160deg, #070910 0%, #0d0f1a 50%, #070910 100%)" }}>
+      style={{ background: "linear-gradient(160deg, var(--grad-login-a) 0%, var(--bg-base) 50%, var(--grad-login-a) 100%)" }}>
 
       <div className="w-full max-w-sm">
         <button onClick={() => setScreen("landing")}
@@ -321,14 +321,14 @@ export default function LoginPage() {
 
         <form onSubmit={handleLiveLogin}
           className="rounded-2xl p-6 flex flex-col gap-4"
-          style={{ background: "#13152a", border: "1px solid #1e2235" }}>
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
 
           <div className="flex flex-col gap-1">
             <label className="text-xs" style={{ color: "#6b7280" }}>Username</label>
             <input type="text" value={user} onChange={(e) => setUser(e.target.value)} required
               autoComplete="username" autoFocus
               className="rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              style={{ background: "#0d0f1a", border: "1px solid #1e2235" }} />
+              style={{ background: "var(--bg-base)", border: "1px solid var(--border-subtle)" }} />
           </div>
 
           <div className="flex flex-col gap-1">
@@ -336,7 +336,7 @@ export default function LoginPage() {
             <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} required
               autoComplete="current-password"
               className="rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              style={{ background: "#0d0f1a", border: "1px solid #1e2235" }} />
+              style={{ background: "var(--bg-base)", border: "1px solid var(--border-subtle)" }} />
           </div>
 
           {(localError || error) && (

@@ -199,7 +199,7 @@ export function SeatLayoutEditor({ cameraId, onSaved }: SeatLayoutEditorProps) {
     if (bgImage) {
       ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
     } else {
-      ctx.fillStyle = "#1f2937";
+      ctx.fillStyle = "var(--bg-hover)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "#6b7280";
       ctx.font = "14px Inter, sans-serif";

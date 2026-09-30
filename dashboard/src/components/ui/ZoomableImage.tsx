@@ -57,7 +57,7 @@ export function ZoomableImage({
   return (
     <div
       className="relative w-full rounded-lg overflow-hidden select-none"
-      style={{ border: "1px solid #2d3148", cursor: zoom > 1 ? "grab" : "default", touchAction: "none" }}
+      style={{ border: "1px solid var(--border-strong)", cursor: zoom > 1 ? "grab" : "default", touchAction: "none" }}
       onWheel={onWheel}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}

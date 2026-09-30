@@ -4,9 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 
-const BG     = "#13152a";
-const BORDER = "#1e2235";
-const HOVER  = "#1e2235";
+const BG     = "var(--bg-card)";
+const BORDER = "var(--border-subtle)";
+const HOVER  = "var(--border-subtle)";
 
 const MONTHS = ["January","February","March","April","May","June",
                 "July","August","September","October","November","December"];
@@ -113,7 +113,7 @@ export function InlineCalendar({ value, onChange, max, showFooter = true, onClea
               onClick={() => onChange(str)}
               className="flex items-center justify-center rounded-lg text-xs h-7 transition-colors"
               style={{
-                background: isSelected ? "#6366f1" : isToday ? "#1e2235" : "transparent",
+                background: isSelected ? "#6366f1" : isToday ? "var(--border-subtle)" : "transparent",
                 color: disabled ? "#2a2f45"
                   : isSelected ? "#fff"
                   : !isCurr ? "#374151"
@@ -124,7 +124,7 @@ export function InlineCalendar({ value, onChange, max, showFooter = true, onClea
                 cursor: disabled ? "not-allowed" : "pointer",
               }}
               onMouseEnter={(e) => { if (!isSelected && !disabled) (e.currentTarget as HTMLElement).style.background = HOVER; }}
-              onMouseLeave={(e) => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = isToday ? "#1e2235" : "transparent"; }}>
+              onMouseLeave={(e) => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = isToday ? "var(--border-subtle)" : "transparent"; }}>
               {cell.day}
             </button>
           );
@@ -137,7 +137,7 @@ export function InlineCalendar({ value, onChange, max, showFooter = true, onClea
           <button type="button"
             onClick={() => { onClear ? onClear() : onChange(""); }}
             className="text-xs px-2.5 py-1 rounded-lg text-gray-400 hover:text-white transition-colors"
-            style={{ background: "#1e2235" }}>
+            style={{ background: "var(--border-subtle)" }}>
             Clear
           </button>
           <button type="button"
@@ -200,7 +200,7 @@ export function DatePicker({ value, onChange, placeholder = "Pick date", label }
 
       {open && typeof window !== "undefined" && createPortal(
         <div className="fixed z-[9999] rounded-2xl shadow-2xl overflow-hidden"
-          style={{ top: pos.top, left: pos.left, width: 272, background: "#0d0f1c", border: `1px solid #2d3148` }}
+          style={{ top: pos.top, left: pos.left, width: 272, background: "var(--bg-base)", border: `1px solid var(--border-strong)` }}
           onMouseDown={(e) => e.stopPropagation()}>
           <InlineCalendar
             value={value}
