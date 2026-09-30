@@ -73,6 +73,50 @@ function removeUnanswered(reviewId: string) {
   window.dispatchEvent(new Event("kyro_unanswered_changed"));
 }
 
+// ─── Archived (dismissed-not-deleted) storage ────────────────────────────────
+// When the user hits "X" on the unanswered panel we USED to delete every
+// question permanently. Now we move them here instead, and a small floating
+// bell lets the user restore them later. Same TTL / cap as unanswered so
+// this doesn't grow forever.
+const ARCHIVED_KEY = "kyro_archived_reviews";
+
+function loadArchived(): ReviewRequest[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const all = JSON.parse(localStorage.getItem(ARCHIVED_KEY) ?? "[]") as ReviewRequest[];
+    const cutoff = Date.now() / 1000 - 24 * 3600;
+    const fresh  = all.filter((r) => r.created_at > cutoff).slice(0, 20);
+    if (fresh.length !== all.length) {
+      try { localStorage.setItem(ARCHIVED_KEY, JSON.stringify(fresh)); } catch {}
+    }
+    return fresh;
+  } catch { return []; }
+}
+
+function saveArchived(reviews: ReviewRequest[]) {
+  try { localStorage.setItem(ARCHIVED_KEY, JSON.stringify(reviews)); } catch {}
+  window.dispatchEvent(new Event("kyro_archived_changed"));
+}
+
+function archiveUnanswered(all: ReviewRequest[]) {
+  // Merge with existing archive, de-duped by review_id, cap at 20.
+  const existing = loadArchived();
+  const seen     = new Set(existing.map((r) => r.review_id));
+  const merged   = [...all.filter((r) => !seen.has(r.review_id)), ...existing].slice(0, 20);
+  saveArchived(merged);
+}
+
+function restoreAllArchived() {
+  const archived  = loadArchived();
+  if (archived.length === 0) return;
+  const current   = loadUnanswered();
+  const seen      = new Set(current.map((r) => r.review_id));
+  const merged    = [...archived.filter((r) => !seen.has(r.review_id)), ...current].slice(0, 10);
+  saveUnanswered(merged);
+  saveArchived([]);
+  window.dispatchEvent(new Event("kyro_unanswered_changed"));
+}
+
 // ─── Demo snapshot ────────────────────────────────────────────────────────────
 function DemoSnapshot({ review }: { review: ReviewRequest }) {
   const [cx, cy] = review.position ?? [200, 150];
@@ -491,11 +535,17 @@ function UnansweredPanel({ cameraId }: { cameraId: string }) {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            saveUnanswered([]); setItems([]); setOpen(false);
+            // Archive instead of delete — the questions stay recoverable via
+            // the floating bell in the top-right until they expire (24h) or
+            // are individually answered.
+            archiveUnanswered(items);
+            saveUnanswered([]);
+            setItems([]);
+            setOpen(false);
             window.dispatchEvent(new Event("kyro_unanswered_changed"));
           }}
-          className="text-gray-600 hover:text-red-400 transition-colors shrink-0"
-          title="Clear all"
+          className="text-gray-600 hover:text-amber-400 transition-colors shrink-0"
+          title="Hide all — you can bring them back from the bell icon"
         >
           <X size={13} />
         </button>
@@ -576,6 +626,57 @@ function UnansweredPanel({ cameraId }: { cameraId: string }) {
   );
 }
 
+// ─── Small floating bell that restores archived questions ────────────────────
+// Only visible when there IS an archive and the main unanswered panel is
+// empty — otherwise the bell would compete with the panel it's meant to be
+// an alternative to. Fixed at top-right so it doesn't collide with the
+// draggable panel or the sidebar.
+function ArchivedRestoreBell() {
+  const [archivedCount, setArchivedCount]     = useState(0);
+  const [unansweredCount, setUnansweredCount] = useState(0);
+
+  useEffect(() => {
+    const read = () => {
+      setArchivedCount(loadArchived().length);
+      setUnansweredCount(loadUnanswered().length);
+    };
+    read();
+    window.addEventListener("kyro_archived_changed",  read);
+    window.addEventListener("kyro_unanswered_changed", read);
+    return () => {
+      window.removeEventListener("kyro_archived_changed",  read);
+      window.removeEventListener("kyro_unanswered_changed", read);
+    };
+  }, []);
+
+  if (archivedCount === 0 || unansweredCount > 0) return null;
+
+  return (
+    <button
+      onClick={restoreAllArchived}
+      className="fixed z-30 flex items-center gap-2 px-3 py-2 rounded-full shadow-lg transition-transform hover:scale-105"
+      style={{
+        top: "1rem",
+        right: "1rem",
+        background: "var(--bg-card)",
+        border: "1px solid rgba(245,158,11,0.5)",
+        color: "#fde68a",
+      }}
+      title={`Bring back ${archivedCount} hidden question${archivedCount !== 1 ? "s" : ""}`}
+      aria-label={`${archivedCount} hidden question${archivedCount !== 1 ? "s" : ""} — click to restore`}
+    >
+      <Bell size={14} className="text-amber-400" />
+      <span className="text-xs font-semibold">
+        {archivedCount}
+      </span>
+      <span
+        className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-pulse"
+        style={{ background: "#f59e0b" }}
+      />
+    </button>
+  );
+}
+
 // ─── Main panel — ONE question at a time ─────────────────────────────────────
 interface ReviewPanelProps {
   reviews: ReviewRequest[];
@@ -614,8 +715,12 @@ export function ReviewPanel({ reviews, cameraId, onDismiss }: ReviewPanelProps) 
         )}
       </div>
 
-      {/* Unanswered backlog — bottom left */}
+      {/* Unanswered backlog — draggable, persists across refreshes */}
       <UnansweredPanel cameraId={cameraId} />
+
+      {/* Top-right bell — appears when the backlog is empty but archived
+         (X'd) questions still exist. Click restores them all. */}
+      <ArchivedRestoreBell />
     </>
   );
 }
