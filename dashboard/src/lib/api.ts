@@ -196,15 +196,100 @@ export interface ZoneDef {
   is_active: boolean;
 }
 
+// ─── Zone demo-mode storage ─────────────────────────────────────────────────
+// In demo mode (or on any deployment where the backend is unreachable),
+// zone create/update/delete calls to the backend fail because there IS no
+// backend. Persist the zones per-camera in localStorage instead so the
+// Layout Editor actually works. Same shape as the backend's ZoneDef, so
+// the rest of the UI doesn't know or care where they came from.
+const ZONES_KEY = (cameraId: string) => `kyro_demo_zones_${cameraId}`;
+
+function readDemoZones(cameraId: string): ZoneDef[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(ZONES_KEY(cameraId));
+    return raw ? (JSON.parse(raw) as ZoneDef[]) : [];
+  } catch { return []; }
+}
+
+function writeDemoZones(cameraId: string, zones: ZoneDef[]): void {
+  if (typeof window === "undefined") return;
+  try { localStorage.setItem(ZONES_KEY(cameraId), JSON.stringify(zones)); } catch {}
+}
+
+function makeZoneId(): string {
+  // Match the backend's `zone-<8hex>` scheme so IDs look consistent.
+  return "zone-" + Math.random().toString(16).slice(2, 10).padStart(8, "0");
+}
+
 export const zonesApi = {
-  list: (cameraId: string) =>
-    request<ZoneDef[]>(`/api/v1/zones/${cameraId}`),
-  create: (cameraId: string, body: { label: string; zone_type: ZoneType; bbox: number[]; hold_seats_in_rows?: string[] }) =>
-    request<ZoneDef>(`/api/v1/zones/${cameraId}`, { method: "POST", body: JSON.stringify(body) }),
-  update: (cameraId: string, zoneId: string, body: { label: string; zone_type: ZoneType; bbox: number[]; hold_seats_in_rows?: string[] }) =>
-    request<ZoneDef>(`/api/v1/zones/${cameraId}/${zoneId}`, { method: "PUT", body: JSON.stringify(body) }),
-  delete: (cameraId: string, zoneId: string) =>
-    request<void>(`/api/v1/zones/${cameraId}/${zoneId}`, { method: "DELETE" }),
+  list: async (cameraId: string): Promise<ZoneDef[]> => {
+    if (inDemoMode()) return readDemoZones(cameraId);
+    try {
+      return await request<ZoneDef[]>(`/api/v1/zones/${cameraId}`);
+    } catch (e) {
+      // Backend unreachable — fall back to whatever we have locally so the
+      // Layout Editor still functions (drawing zones, keeping them across
+      // refreshes) instead of erroring the whole page.
+      return readDemoZones(cameraId);
+    }
+  },
+
+  create: async (cameraId: string, body: { label: string; zone_type: ZoneType; bbox: number[]; hold_seats_in_rows?: string[] }): Promise<ZoneDef> => {
+    if (!inDemoMode()) {
+      try {
+        return await request<ZoneDef>(`/api/v1/zones/${cameraId}`, { method: "POST", body: JSON.stringify(body) });
+      } catch (e) {
+        // Fall through to localStorage save so the user's zone isn't lost
+        // when the backend is down. Marked via a console warning so this
+        // doesn't silently hide a real backend outage.
+        console.warn("[zonesApi] backend unreachable — saving zone locally", e);
+      }
+    }
+    const created: ZoneDef = {
+      zone_id: makeZoneId(),
+      label: body.label,
+      zone_type: body.zone_type,
+      bbox: body.bbox,
+      hold_seats_in_rows: body.hold_seats_in_rows ?? [],
+    };
+    writeDemoZones(cameraId, [...readDemoZones(cameraId), created]);
+    return created;
+  },
+
+  update: async (cameraId: string, zoneId: string, body: { label: string; zone_type: ZoneType; bbox: number[]; hold_seats_in_rows?: string[] }): Promise<ZoneDef> => {
+    if (!inDemoMode()) {
+      try {
+        return await request<ZoneDef>(`/api/v1/zones/${cameraId}/${zoneId}`, { method: "PUT", body: JSON.stringify(body) });
+      } catch (e) {
+        console.warn("[zonesApi] backend unreachable — updating zone locally", e);
+      }
+    }
+    const all = readDemoZones(cameraId);
+    const idx = all.findIndex((z) => z.zone_id === zoneId);
+    const updated: ZoneDef = {
+      zone_id: zoneId,
+      label: body.label,
+      zone_type: body.zone_type,
+      bbox: body.bbox,
+      hold_seats_in_rows: body.hold_seats_in_rows ?? [],
+    };
+    if (idx >= 0) all[idx] = updated; else all.push(updated);
+    writeDemoZones(cameraId, all);
+    return updated;
+  },
+
+  delete: async (cameraId: string, zoneId: string): Promise<void> => {
+    if (!inDemoMode()) {
+      try {
+        await request<void>(`/api/v1/zones/${cameraId}/${zoneId}`, { method: "DELETE" });
+        return;
+      } catch (e) {
+        console.warn("[zonesApi] backend unreachable — deleting zone locally", e);
+      }
+    }
+    writeDemoZones(cameraId, readDemoZones(cameraId).filter((z) => z.zone_id !== zoneId));
+  },
 };
 
 export const seatsApi = {
