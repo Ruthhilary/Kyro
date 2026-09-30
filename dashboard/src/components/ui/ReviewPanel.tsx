@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { AlertTriangle, X, Bell, ChevronDown, ChevronUp, Eye } from "lucide-react";
+import { AlertTriangle, X, Bell, ChevronDown, ChevronUp, Eye, GripVertical } from "lucide-react";
 import { recordDemoAnswer } from "@/lib/demo";
 import { inDemoMode } from "@/lib/liveMode";
 import { ZoomableImage } from "@/components/ui/ZoomableImage";
@@ -292,12 +292,47 @@ function ReviewCard({
 }
 
 // ─── Unanswered backlog panel ─────────────────────────────────────────────────
+// Draggable position — stored in localStorage so it survives refreshes and
+// respects wherever the user put it last (default puts it in the bottom-right,
+// clear of the sidebar's Sign-out button on the bottom-left).
+const POSITION_KEY = "kyro_unanswered_position";
+const PANEL_WIDTH  = 320;
+const PANEL_ESTIMATED_HEIGHT = 320;   // rough — used only for default placement
+
+interface PanelPos { x: number; y: number; }
+
+function loadPosition(): PanelPos | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(POSITION_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (typeof p?.x === "number" && typeof p?.y === "number") return p;
+  } catch {}
+  return null;
+}
+
+function savePosition(p: PanelPos): void {
+  try { localStorage.setItem(POSITION_KEY, JSON.stringify(p)); } catch {}
+}
+
+/** Keep the panel fully on-screen so a resize can't hide it. */
+function clampToViewport(p: PanelPos): PanelPos {
+  if (typeof window === "undefined") return p;
+  const maxX = Math.max(8, window.innerWidth  - PANEL_WIDTH - 8);
+  const maxY = Math.max(8, window.innerHeight - 80 - 8);   // 80 = header alone
+  return { x: Math.max(8, Math.min(p.x, maxX)), y: Math.max(8, Math.min(p.y, maxY)) };
+}
+
 function UnansweredPanel({ cameraId }: { cameraId: string }) {
   const [items, setItems]         = useState<ReviewRequest[]>([]);
   const [open, setOpen]           = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [answering, setAnswering] = useState<string | null>(null);
   const [answered, setAnswered]   = useState<string | null>(null); // brief success flash
+  const [position, setPosition]   = useState<PanelPos | null>(null);
+  const [dragging, setDragging]   = useState(false);
+  const dragOffsetRef             = useRef<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
 
   useEffect(() => {
     const read = () => setItems(loadUnanswered());
@@ -325,6 +360,63 @@ function UnansweredPanel({ cameraId }: { cameraId: string }) {
     return () => window.removeEventListener("kyro_focus_review", onFocus);
   }, []);
 
+  // Initialise + clamp position on mount and window resize.
+  useEffect(() => {
+    function initOrClamp() {
+      const saved = loadPosition();
+      const fallback: PanelPos = {
+        // Default: bottom-RIGHT (was bottom-left, which blocked Sign out
+        // in the sidebar). 24 = ~1.5rem breathing room.
+        x: Math.max(8, window.innerWidth  - PANEL_WIDTH - 24),
+        y: Math.max(8, window.innerHeight - PANEL_ESTIMATED_HEIGHT - 24),
+      };
+      setPosition(clampToViewport(saved ?? fallback));
+    }
+    initOrClamp();
+    window.addEventListener("resize", initOrClamp);
+    return () => window.removeEventListener("resize", initOrClamp);
+  }, []);
+
+  // Drag handlers — support mouse and touch so this works on phone + iPad.
+  const onDragStart = useCallback((clientX: number, clientY: number) => {
+    if (!position) return;
+    dragOffsetRef.current = { dx: clientX - position.x, dy: clientY - position.y };
+    setDragging(true);
+  }, [position]);
+
+  useEffect(() => {
+    if (!dragging) return;
+    function move(clientX: number, clientY: number) {
+      const next = clampToViewport({
+        x: clientX - dragOffsetRef.current.dx,
+        y: clientY - dragOffsetRef.current.dy,
+      });
+      setPosition(next);
+    }
+    const onMouseMove = (e: MouseEvent) => { e.preventDefault(); move(e.clientX, e.clientY); };
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 0) return;
+      e.preventDefault();
+      move(e.touches[0].clientX, e.touches[0].clientY);
+    };
+    const onEnd = () => {
+      setDragging(false);
+      if (position) savePosition(position);
+    };
+    window.addEventListener("mousemove",  onMouseMove);
+    window.addEventListener("mouseup",    onEnd);
+    window.addEventListener("touchmove",  onTouchMove, { passive: false });
+    window.addEventListener("touchend",   onEnd);
+    window.addEventListener("touchcancel", onEnd);
+    return () => {
+      window.removeEventListener("mousemove",  onMouseMove);
+      window.removeEventListener("mouseup",    onEnd);
+      window.removeEventListener("touchmove",  onTouchMove);
+      window.removeEventListener("touchend",   onEnd);
+      window.removeEventListener("touchcancel", onEnd);
+    };
+  }, [dragging, position]);
+
   async function answer(review: ReviewRequest, option: string) {
     const answerCode = ANSWER_MAP[option] ?? option.toLowerCase().split(" ")[0];
     setAnswering(review.review_id);
@@ -350,23 +442,61 @@ function UnansweredPanel({ cameraId }: { cameraId: string }) {
   }
 
   if (items.length === 0) return null;
+  if (!position) return null;  // waiting for mount to compute the default
 
   return (
-    <div className="fixed bottom-6 left-6 z-40 w-80">
-      {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl"
-        style={{ background: "var(--bg-card)", border: "1px solid rgba(245,158,11,0.4)" }}>
+    <div
+      className="fixed z-40"
+      style={{
+        left: position.x,
+        top:  position.y,
+        width: PANEL_WIDTH,
+        // While dragging, disable the transition so movement tracks the pointer
+        // exactly; snap back once released.
+        transition: dragging ? "none" : "left 120ms ease, top 120ms ease",
+        userSelect: dragging ? "none" : "auto",
+      }}
+    >
+      {/* Header — the drag handle. Grab the grip icon (or anywhere else that
+         isn't the collapse or clear button) to move the panel. */}
+      <div
+        className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
+        style={{
+          background: "var(--bg-card)",
+          border: "1px solid rgba(245,158,11,0.4)",
+          cursor: dragging ? "grabbing" : "grab",
+        }}
+        onMouseDown={(e) => {
+          // Ignore drags that start on the collapse toggle or clear button
+          if ((e.target as HTMLElement).closest("button")) return;
+          onDragStart(e.clientX, e.clientY);
+        }}
+        onTouchStart={(e) => {
+          if ((e.target as HTMLElement).closest("button")) return;
+          if (e.touches.length === 0) return;
+          onDragStart(e.touches[0].clientX, e.touches[0].clientY);
+        }}
+        aria-label="Drag to reposition"
+      >
+        <GripVertical size={14} className="text-amber-400/60 shrink-0" />
         <Bell size={14} className="text-amber-400 shrink-0" />
-        <button onClick={() => setOpen((p) => !p)}
+        <button
+          onClick={(e) => { e.stopPropagation(); setOpen((p) => !p); }}
           className="flex items-center gap-2 flex-1 text-sm font-medium text-left"
-          style={{ color: "#fde68a" }}>
+          style={{ color: "#fde68a" }}
+        >
           <span className="flex-1">{items.length} unanswered question{items.length !== 1 ? "s" : ""}</span>
           {open ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
         </button>
         <button
-          onClick={() => { saveUnanswered([]); setItems([]); setOpen(false); window.dispatchEvent(new Event("kyro_unanswered_changed")); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            saveUnanswered([]); setItems([]); setOpen(false);
+            window.dispatchEvent(new Event("kyro_unanswered_changed"));
+          }}
           className="text-gray-600 hover:text-red-400 transition-colors shrink-0"
-          title="Clear all">
+          title="Clear all"
+        >
           <X size={13} />
         </button>
       </div>
