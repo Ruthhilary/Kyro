@@ -1,6 +1,8 @@
 
 # Kyro
 
+https://kyro.kharischurch.com/
+
 ### AI-Powered Church Attendance, Seating & Vision Management Platform
 
 Kyro is an AI-powered church management and computer vision platform designed to help churches understand attendance, seating, capacity, and movement within their venues in real time.
